@@ -1,0 +1,8 @@
+(library
+ (name floating_positioning_new)
+ (public_name virtual_dom_toplayer.floating_positioning)
+ (preprocess
+  (pps js_of_ocaml-ppx ppx_css gen_js_api.ppx ppx_jane))
+ (js_of_ocaml
+  (javascript_files floating_ui_core.js floating_ui_dom.js))
+ (libraries core js_of_ocaml js_of_ocaml_patches virtual_dom gen_js_api))

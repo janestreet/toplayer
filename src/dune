@@ -1,0 +1,6 @@
+(library
+ (name vdom_toplayer)
+ (public_name virtual_dom_toplayer.popover)
+ (preprocess
+  (pps js_of_ocaml-ppx ppx_jane ppx_css))
+ (libraries virtual_dom floating_positioning_new core))
