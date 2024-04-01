@@ -12,7 +12,13 @@ module Anchor := Floating_positioning_new.Anchor
     custom atts for borders/padding/style, possibly provide an `arrow` element, and offer
     a slightly simpler API for users of your UI component library.
 
-    [popover] is intended to be used through the [bonsai_web_ui_popover] library. *)
+    [popover] is intended to be used through the [bonsai_web_ui_popover] library.
+
+    Note that the DOM for all popovers will be placed outside of the app root.
+    If you want global event listeners (including keyboard shortcuts) to work inside
+    popovers, they should be set via [Vdom.Attr.Global_listeners].
+    Similarly, global styles should be set using the [:root] pseudo-class, and
+    [Inline_css.Private.Dynamic.attr]. *)
 
 (** The optional [arrow] argument allows automatically positioning an "arrow" element to
     point towards the center of the floating element's anchor.

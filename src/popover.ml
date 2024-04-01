@@ -64,13 +64,16 @@ module Popover_attr = struct
           ~offset
           (Floating_positioning_new.Anchor.of_element anchor)
       in
-      Vdom.Node.div
-        ~attrs:[ Popover_dom.attrs `Manual; position_attr; show_on_mount ]
-        [ content; Option.value_map arrow ~f:Popover_dom.arrow ~default:Vdom.Node.none ]
+      Popover_dom.node
+        ?arrow
+        ~extra_attrs:[ position_attr; show_on_mount ]
+        ~kind:`Manual
+        content
     ;;
 
     let create_one (input : Input.For_one.t) ~anchor =
-      let portal = Portal.create (wrap_content input ~anchor) in
+      let portal_root = Portal.For_popovers.find_popover_portal_root anchor in
+      let portal = Portal.create portal_root (wrap_content input ~anchor) in
       { State.For_one.portal; input }
     ;;
 
@@ -137,10 +140,11 @@ let node
   ~popover_content
   anchor
   =
-  Vdom.Node.div
-    ~attrs:
-      [ Popover_dom.attrs `Manual
-      ; show_on_mount
+  Popover_dom.node
+    ?arrow
+    ~kind:`Manual
+    ~extra_attrs:
+      [ show_on_mount
       ; position_me
           ~arrow_selector:Popover_dom.arrow_selector
           ~position
@@ -148,7 +152,5 @@ let node
           ~offset
           anchor
       ]
-    [ popover_content
-    ; Option.value_map arrow ~f:Popover_dom.arrow ~default:Vdom.Node.none
-    ]
+    popover_content
 ;;

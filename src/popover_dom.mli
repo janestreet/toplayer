@@ -11,15 +11,19 @@ val is_hovered : Dom_html.element Js.t -> bool
 val is_popover : Dom_html.element Js.t -> bool
 val is_open : Dom_html.element Js.t -> bool
 
-(** Creates attrs that indicate an HTML element to be a popover.
-    In particular, we:
-    - Add a `popover` attribute, with either `manual` or `auto` value
-    - Unset browser styles
-    - Set tabindex = -1
-*)
-val attrs : [ `Auto | `Manual ] -> Vdom.Attr.t
-
-(** Wraps a vdom node in a div that assigns positioning to be a floating ui arrow. *)
-val arrow : Vdom.Node.t -> Vdom.Node.t
+(** We wrap the content in a div that:
+    - Adds a `popover` attribute, with either `manual` or `auto` value
+    - Unsets browser styles
+    - Sets tabindex = -1
+    - Constrains the popover's max-height and max-width to the maximum available height/width
+    - Applies some "default" max-width and placement positioning so that floating_ui
+      can start from a clean slate
+    - Adds in the arrow element, as well as a container widget for nested popovers *)
+val node
+  :  ?arrow:Vdom.Node.t
+  -> kind:[< `Auto | `Manual ]
+  -> extra_attrs:Vdom.Attr.t list
+  -> Vdom.Node.t
+  -> Vdom.Node.t
 
 val arrow_selector : string

@@ -4,5 +4,5 @@
  (preprocess
   (pps js_of_ocaml-ppx ppx_css gen_js_api.ppx ppx_jane))
  (js_of_ocaml
-  (javascript_files floating_ui_core.js floating_ui_dom.js))
+  (javascript_files for_ocaml_bindings.js))
  (libraries core js_of_ocaml js_of_ocaml_patches virtual_dom gen_js_api))

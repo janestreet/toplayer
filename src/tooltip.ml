@@ -139,10 +139,11 @@ module Tooltip_attr = struct
             ~offset
             (Anchor.of_element anchor)
       in
-      Vdom.Node.div
-        ~attrs:
-          [ Popover_dom.attrs `Auto
-          ; position_attr
+      Popover_dom.node
+        ?arrow
+        ~kind:`Auto
+        ~extra_attrs:
+          [ position_attr
           ; Element_listener.create (fun popover ->
               show_on_mouseenter ~anchor ~popover ~delay:show_delay
               @ hide_on_mouseleave
@@ -151,7 +152,7 @@ module Tooltip_attr = struct
                   ~popover
                   ~grace_period:hide_grace_period)
           ]
-        [ content; Option.value_map arrow ~f:Popover_dom.arrow ~default:Vdom.Node.none ]
+        content
     ;;
 
     (* Auto-positioning can be very expensive. Since pages can have many, many, (many)
@@ -169,7 +170,11 @@ module Tooltip_attr = struct
 
     let on_mount (input : Input.t) (state_ref : State.t) anchor =
       let state =
-        let portal = Portal.create (wrap_content ~anchor ~is_open:false input) in
+        let portal =
+          Portal.create
+            (Portal.For_popovers.find_popover_portal_root anchor)
+            (wrap_content ~anchor ~is_open:false input)
+        in
         let popover = Portal.element portal in
         let set_is_open is_open =
           State.update

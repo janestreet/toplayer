@@ -32,14 +32,13 @@ let unset_browser_styling =
    `tabindex` set. *)
 let tabindex_attr = Vdom.Attr.tabindex (-1)
 
-let attrs mode =
-  let mode_string =
-    match mode with
-    | `Auto -> "auto"
-    | `Manual -> "manual"
-  in
+let attrs kind =
   Vdom.Attr.many
-    [ Vdom.Attr.create "popover" mode_string
+    [ Vdom.Attr.create
+        "popover"
+        (match kind with
+         | `Auto -> "auto"
+         | `Manual -> "manual")
     ; unset_browser_styling
     ; tabindex_attr
     ; Floating_positioning_new.Accessors.floating_styling
@@ -48,7 +47,7 @@ let attrs mode =
 
 let arrow_data = "data-floating-ui-arrow-parent"
 
-let arrow node =
+let wrap_arrow node =
   Vdom.Node.div
     ~attrs:
       [ Vdom.Attr.create arrow_data ""
@@ -58,3 +57,14 @@ let arrow node =
 ;;
 
 let arrow_selector = [%string "[%{arrow_data}]"]
+
+let node ?arrow ~kind ~extra_attrs content =
+  Vdom.Node.div
+    ~attrs:([ attrs kind; Portal.For_popovers.nestable_popover_attr ] @ extra_attrs)
+    (* [nested_popover_root] MUST be the last child, otherwise nested popovers
+       will break.*)
+    [ content
+    ; Option.value_map arrow ~f:wrap_arrow ~default:Vdom.Node.none
+    ; Portal.For_popovers.nested_popover_root
+    ]
+;;
