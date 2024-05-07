@@ -1,4 +1,5 @@
 opam-version: "2.0"
+version: "v0.17.0"
 maintainer: "Jane Street developers"
 authors: ["Jane Street Group, LLC"]
 homepage: "https://github.com/janestreet/virtual_dom_toplayer"
@@ -10,12 +11,12 @@ build: [
   ["dune" "build" "-p" name "-j" jobs]
 ]
 depends: [
-  "ocaml" {>= "5.1.0"}
-  "core"
-  "js_of_ocaml_patches"
-  "ppx_css"
-  "ppx_jane"
-  "virtual_dom"
+  "ocaml"               {>= "5.1.0"}
+  "core"                {>= "v0.17" & < "v0.18"}
+  "js_of_ocaml_patches" {>= "v0.17" & < "v0.18"}
+  "ppx_css"             {>= "v0.17" & < "v0.18"}
+  "ppx_jane"            {>= "v0.17" & < "v0.18"}
+  "virtual_dom"         {>= "v0.17" & < "v0.18"}
   "dune"                {>= "3.11.0"}
   "gen_js_api"          {>= "1.0.8"}
   "js_of_ocaml"         {>= "5.1.1" & < "5.7.0"}
