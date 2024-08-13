@@ -27,3 +27,7 @@ val node
   -> Vdom.Node.t
 
 val arrow_selector : string
+
+(** Listens for "toggle" events on the popover it is attached to. Every open,
+    if nothing is already focused inside the popover, will focus the popover root. *)
+val focus_popover_on_open : Vdom.Attr.t

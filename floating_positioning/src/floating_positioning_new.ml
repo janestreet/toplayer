@@ -3,6 +3,7 @@ open! Js_of_ocaml
 open Virtual_dom
 module Accessors = Update_position.Accessors
 module Strategy = Bindings.Strategy
+module Match_anchor_side = Update_position.Match_anchor_side
 
 module Position = struct
   type t =
@@ -57,7 +58,16 @@ end
 
 type auto_update_handle = Bindings.Auto_update_handle.t
 
-let update_position ?arrow_selector ~anchor ~floating position alignment offset strategy =
+let update_position
+  ?arrow_selector
+  ~anchor
+  ~floating
+  ~match_anchor_side_length
+  position
+  alignment
+  offset
+  strategy
+  =
   let side =
     match position with
     | Position.Auto -> None
@@ -75,6 +85,7 @@ let update_position ?arrow_selector ~anchor ~floating position alignment offset 
   Update_position.single_update
     ~anchor
     ~floating
+    ~match_anchor_side_length
     ~arrow_selector
     side
     alignment
@@ -86,13 +97,22 @@ let auto_update_position
   ?arrow_selector
   ~anchor
   ~floating
+  ~match_anchor_side_length
   position
   alignment
   offset
   strategy
   =
   Bindings.Auto_update_handle.create ~anchor ~floating ~update:(fun () ->
-    update_position ?arrow_selector ~anchor ~floating position alignment offset strategy)
+    update_position
+      ?arrow_selector
+      ~anchor
+      ~floating
+      ~match_anchor_side_length
+      position
+      alignment
+      offset
+      strategy)
 ;;
 
 let cancel_auto_update = Bindings.Auto_update_handle.cleanup
@@ -105,10 +125,13 @@ module Position_element = struct
 
     module Input = struct
       type t =
-        { position : Position.t
+        { (* This runs only once, so we don't need to check if it changed for updates. *)
+          prepare : (Dom_html.element Js.t -> unit[@equal.ignore])
+        ; position : Position.t
         ; alignment : Alignment.t
         ; offset : Offset.t
         ; strategy : Strategy.t
+        ; match_anchor_side_length : Match_anchor_side.t option
         ; arrow_selector : string option
         ; anchor : Anchor.t
         }
@@ -122,20 +145,30 @@ module Position_element = struct
     let init _ _ = ref None
 
     let auto_update_position
-      { Input.position; alignment; offset; strategy; arrow_selector; anchor }
+      { Input.position
+      ; alignment
+      ; offset
+      ; strategy
+      ; match_anchor_side_length
+      ; arrow_selector
+      ; anchor
+      ; _
+      }
       element
       =
       auto_update_position
         ?arrow_selector
         ~anchor
         ~floating:element
+        ~match_anchor_side_length
         position
         alignment
         offset
         strategy
     ;;
 
-    let on_mount input handle element =
+    let on_mount (input : Input.t) handle element =
+      input.prepare element;
       Option.iter !handle ~f:cancel_auto_update;
       handle := Some (auto_update_position input element)
     ;;
@@ -145,7 +178,7 @@ module Position_element = struct
       then ()
       else
         Dom_html.window##requestAnimationFrame
-          (Js.wrap_callback (fun (_timestamp : float) ->
+          (Js.wrap_callback (fun (_timestamp : Js.number Js.t) ->
              Option.iter !handle ~f:cancel_auto_update;
              handle := Some (auto_update_position new_input element)))
         |> (ignore : Dom_html.animation_frame_request_id -> unit)
@@ -159,14 +192,42 @@ module Position_element = struct
   include Vdom.Attr.Hooks.Make (Impl)
 end
 
+let hook_name = "floating_positioning_virtual"
+
 let position_me
+  ?(prepare = (ignore : Dom_html.element Js.t -> unit))
   ?arrow_selector
   ?(position = Position.Auto)
   ?(alignment = Alignment.Center)
   ?(offset = Offset.zero)
+  ?match_anchor_side_length
   anchor
   =
   Position_element.create
-    { position; alignment; offset; strategy = Fixed; arrow_selector; anchor }
-  |> Vdom.Attr.create_hook "floating_positioning_virtual"
+    { prepare
+    ; position
+    ; alignment
+    ; offset
+    ; strategy = Fixed
+    ; match_anchor_side_length
+    ; arrow_selector
+    ; anchor
+    }
+  |> Vdom.Attr.create_hook hook_name
 ;;
+
+module For_testing_position_me_hook = struct
+  type t = Position_element.Input.t =
+    { prepare : Dom_html.element Js.t -> unit
+    ; position : Position.t
+    ; alignment : Alignment.t
+    ; offset : Offset.t
+    ; strategy : Strategy.t
+    ; match_anchor_side_length : Match_anchor_side.t option
+    ; arrow_selector : string option
+    ; anchor : Anchor.t
+    }
+
+  let type_id = Position_element.For_testing.type_id
+  let hook_name = hook_name
+end

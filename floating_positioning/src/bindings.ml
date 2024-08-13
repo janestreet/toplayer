@@ -144,22 +144,70 @@ module Middleware = struct
   module Size = struct
     module Options = struct
       module Apply_options = struct
+        module Rect = struct
+          type t =
+            { width : float
+            ; height : float
+            }
+
+          let rec t_of_js : Ojs.t -> t =
+            fun (x16 : Ojs.t) ->
+            { width = Ojs.float_of_js (Ojs.get_prop_ascii x16 "width")
+            ; height = Ojs.float_of_js (Ojs.get_prop_ascii x16 "height")
+            }
+
+          and t_to_js : t -> Ojs.t =
+            fun (x15 : t) ->
+            Ojs.obj
+              [| "width", Ojs.float_to_js x15.width
+               ; "height", Ojs.float_to_js x15.height
+              |]
+          ;;
+        end
+
+        module Element_rects = struct
+          type t =
+            { reference : Rect.t
+            ; floating : Rect.t
+            }
+
+          let rec t_of_js : Ojs.t -> t =
+            fun (x18 : Ojs.t) ->
+            { reference = Rect.t_of_js (Ojs.get_prop_ascii x18 "reference")
+            ; floating = Rect.t_of_js (Ojs.get_prop_ascii x18 "floating")
+            }
+
+          and t_to_js : t -> Ojs.t =
+            fun (x17 : t) ->
+            Ojs.obj
+              [| "reference", Rect.t_to_js x17.reference
+               ; "floating", Rect.t_to_js x17.floating
+              |]
+          ;;
+        end
+
         type t =
           { available_width : float
           ; available_height : float
+          ; rects : Element_rects.t
+          ; placement : Placement.t
           }
 
         let rec t_of_js : Ojs.t -> t =
-          fun (x16 : Ojs.t) ->
-          { available_width = Ojs.float_of_js (Ojs.get_prop_ascii x16 "availableWidth")
-          ; available_height = Ojs.float_of_js (Ojs.get_prop_ascii x16 "availableHeight")
+          fun (x20 : Ojs.t) ->
+          { available_width = Ojs.float_of_js (Ojs.get_prop_ascii x20 "availableWidth")
+          ; available_height = Ojs.float_of_js (Ojs.get_prop_ascii x20 "availableHeight")
+          ; rects = Element_rects.t_of_js (Ojs.get_prop_ascii x20 "rects")
+          ; placement = Placement.t_of_js (Ojs.get_prop_ascii x20 "placement")
           }
 
         and t_to_js : t -> Ojs.t =
-          fun (x15 : t) ->
+          fun (x19 : t) ->
           Ojs.obj
-            [| "availableWidth", Ojs.float_to_js x15.available_width
-             ; "availableHeight", Ojs.float_to_js x15.available_height
+            [| "availableWidth", Ojs.float_to_js x19.available_width
+             ; "availableHeight", Ojs.float_to_js x19.available_height
+             ; "rects", Element_rects.t_to_js x19.rects
+             ; "placement", Placement.t_to_js x19.placement
             |]
         ;;
       end
@@ -167,32 +215,32 @@ module Middleware = struct
       type t = { apply : Apply_options.t -> unit }
 
       let rec t_of_js : Ojs.t -> t =
-        fun (x19 : Ojs.t) ->
+        fun (x23 : Ojs.t) ->
         { apply =
-            (fun (x20 : Apply_options.t) ->
+            (fun (x24 : Apply_options.t) ->
               ignore
                 (Ojs.apply
-                   (Ojs.get_prop_ascii x19 "apply")
-                   [| Apply_options.t_to_js x20 |]))
+                   (Ojs.get_prop_ascii x23 "apply")
+                   [| Apply_options.t_to_js x24 |]))
         }
 
       and t_to_js : t -> Ojs.t =
-        fun (x17 : t) ->
+        fun (x21 : t) ->
         Ojs.obj
           [| ( "apply"
-             , Ojs.fun_to_js 1 (fun (x18 : Ojs.t) ->
-                 x17.apply (Apply_options.t_of_js x18)) )
+             , Ojs.fun_to_js 1 (fun (x22 : Ojs.t) ->
+                 x21.apply (Apply_options.t_of_js x22)) )
           |]
       ;;
     end
 
     let create : Options.t -> t =
-      fun (x21 : Options.t) ->
+      fun (x25 : Options.t) ->
       t_of_js
         (Ojs.call
            (Ojs.get_prop_ascii Ojs.global "FloatingUIDOM")
            "size"
-           [| Options.t_to_js x21 |])
+           [| Options.t_to_js x25 |])
     ;;
   end
 
@@ -201,22 +249,22 @@ module Middleware = struct
       type t = { padding : float option }
 
       let rec t_of_js : Ojs.t -> t =
-        fun (x24 : Ojs.t) ->
-        { padding = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x24 "padding") }
+        fun (x28 : Ojs.t) ->
+        { padding = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x28 "padding") }
 
       and t_to_js : t -> Ojs.t =
-        fun (x22 : t) ->
-        Ojs.obj [| "padding", Ojs.option_to_js Ojs.float_to_js x22.padding |]
+        fun (x26 : t) ->
+        Ojs.obj [| "padding", Ojs.option_to_js Ojs.float_to_js x26.padding |]
       ;;
     end
 
     let create : Options.t -> t =
-      fun (x26 : Options.t) ->
+      fun (x30 : Options.t) ->
       t_of_js
         (Ojs.call
            (Ojs.get_prop_ascii Ojs.global "FloatingUIDOM")
            "flip"
-           [| Options.t_to_js x26 |])
+           [| Options.t_to_js x30 |])
     ;;
   end
 
@@ -229,32 +277,32 @@ module Middleware = struct
           }
 
         let rec t_of_js : Ojs.t -> t =
-          fun (x28 : Ojs.t) ->
-          { main_axis = Ojs.bool_of_js (Ojs.get_prop_ascii x28 "mainAxis")
-          ; cross_axis = Ojs.bool_of_js (Ojs.get_prop_ascii x28 "crossAxis")
+          fun (x32 : Ojs.t) ->
+          { main_axis = Ojs.bool_of_js (Ojs.get_prop_ascii x32 "mainAxis")
+          ; cross_axis = Ojs.bool_of_js (Ojs.get_prop_ascii x32 "crossAxis")
           }
 
         and t_to_js : t -> Ojs.t =
-          fun (x27 : t) ->
+          fun (x31 : t) ->
           Ojs.obj
-            [| "mainAxis", Ojs.bool_to_js x27.main_axis
-             ; "crossAxis", Ojs.bool_to_js x27.cross_axis
+            [| "mainAxis", Ojs.bool_to_js x31.main_axis
+             ; "crossAxis", Ojs.bool_to_js x31.cross_axis
             |]
         ;;
       end
 
       type t = Ojs.t
 
-      let rec t_of_js : Ojs.t -> t = fun (x30 : Ojs.t) -> x30
-      and t_to_js : t -> Ojs.t = fun (x29 : Ojs.t) -> x29
+      let rec t_of_js : Ojs.t -> t = fun (x34 : Ojs.t) -> x34
+      and t_to_js : t -> Ojs.t = fun (x33 : Ojs.t) -> x33
 
       let create : Options.t -> t =
-        fun (x31 : Options.t) ->
+        fun (x35 : Options.t) ->
         t_of_js
           (Ojs.call
              (Ojs.get_prop_ascii Ojs.global "FloatingUIDOM")
              "limitShift"
-             [| Options.t_to_js x31 |])
+             [| Options.t_to_js x35 |])
       ;;
     end
 
@@ -265,27 +313,27 @@ module Middleware = struct
         }
 
       let rec t_of_js : Ojs.t -> t =
-        fun (x34 : Ojs.t) ->
-        { padding = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x34 "padding")
-        ; limiter = Limiter.t_of_js (Ojs.get_prop_ascii x34 "limiter")
+        fun (x38 : Ojs.t) ->
+        { padding = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x38 "padding")
+        ; limiter = Limiter.t_of_js (Ojs.get_prop_ascii x38 "limiter")
         }
 
       and t_to_js : t -> Ojs.t =
-        fun (x32 : t) ->
+        fun (x36 : t) ->
         Ojs.obj
-          [| "padding", Ojs.option_to_js Ojs.float_to_js x32.padding
-           ; "limiter", Limiter.t_to_js x32.limiter
+          [| "padding", Ojs.option_to_js Ojs.float_to_js x36.padding
+           ; "limiter", Limiter.t_to_js x36.limiter
           |]
       ;;
     end
 
     let create : Options.t -> t =
-      fun (x36 : Options.t) ->
+      fun (x40 : Options.t) ->
       t_of_js
         (Ojs.call
            (Ojs.get_prop_ascii Ojs.global "FloatingUIDOM")
            "shift"
-           [| Options.t_to_js x36 |])
+           [| Options.t_to_js x40 |])
     ;;
   end
 
@@ -297,28 +345,28 @@ module Middleware = struct
         }
 
       let rec t_of_js : Ojs.t -> t =
-        fun (x40 : Ojs.t) ->
+        fun (x44 : Ojs.t) ->
         { alignment =
-            Ojs.option_of_js Alignment.t_of_js (Ojs.get_prop_ascii x40 "alignment")
-        ; padding = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x40 "padding")
+            Ojs.option_of_js Alignment.t_of_js (Ojs.get_prop_ascii x44 "alignment")
+        ; padding = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x44 "padding")
         }
 
       and t_to_js : t -> Ojs.t =
-        fun (x37 : t) ->
+        fun (x41 : t) ->
         Ojs.obj
-          [| "alignment", Ojs.option_to_js Alignment.t_to_js x37.alignment
-           ; "padding", Ojs.option_to_js Ojs.float_to_js x37.padding
+          [| "alignment", Ojs.option_to_js Alignment.t_to_js x41.alignment
+           ; "padding", Ojs.option_to_js Ojs.float_to_js x41.padding
           |]
       ;;
     end
 
     let create : Options.t -> t =
-      fun (x43 : Options.t) ->
+      fun (x47 : Options.t) ->
       t_of_js
         (Ojs.call
            (Ojs.get_prop_ascii Ojs.global "FloatingUIDOM")
            "autoPlacement"
-           [| Options.t_to_js x43 |])
+           [| Options.t_to_js x47 |])
     ;;
   end
 
@@ -330,27 +378,27 @@ module Middleware = struct
         }
 
       let rec t_of_js : Ojs.t -> t =
-        fun (x47 : Ojs.t) ->
-        { element = Js.t_of_js Dom_html.element_of_js (Ojs.get_prop_ascii x47 "element")
-        ; padding = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x47 "padding")
+        fun (x51 : Ojs.t) ->
+        { element = Js.t_of_js Dom_html.element_of_js (Ojs.get_prop_ascii x51 "element")
+        ; padding = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x51 "padding")
         }
 
       and t_to_js : t -> Ojs.t =
-        fun (x44 : t) ->
+        fun (x48 : t) ->
         Ojs.obj
-          [| "element", Js.t_to_js Dom_html.element_to_js x44.element
-           ; "padding", Ojs.option_to_js Ojs.float_to_js x44.padding
+          [| "element", Js.t_to_js Dom_html.element_to_js x48.element
+           ; "padding", Ojs.option_to_js Ojs.float_to_js x48.padding
           |]
       ;;
     end
 
     let create : Options.t -> t =
-      fun (x50 : Options.t) ->
+      fun (x54 : Options.t) ->
       t_of_js
         (Ojs.call
            (Ojs.get_prop_ascii Ojs.global "FloatingUIDOM")
            "arrow"
-           [| Options.t_to_js x50 |])
+           [| Options.t_to_js x54 |])
     ;;
   end
 end
@@ -369,28 +417,28 @@ module Reference_element = struct
       }
 
     let rec t_of_js : Ojs.t -> t =
-      fun (x52 : Ojs.t) ->
-      { width = Ojs.float_of_js (Ojs.get_prop_ascii x52 "width")
-      ; height = Ojs.float_of_js (Ojs.get_prop_ascii x52 "height")
-      ; x = Ojs.float_of_js (Ojs.get_prop_ascii x52 "x")
-      ; y = Ojs.float_of_js (Ojs.get_prop_ascii x52 "y")
-      ; top = Ojs.float_of_js (Ojs.get_prop_ascii x52 "top")
-      ; left = Ojs.float_of_js (Ojs.get_prop_ascii x52 "left")
-      ; right = Ojs.float_of_js (Ojs.get_prop_ascii x52 "right")
-      ; bottom = Ojs.float_of_js (Ojs.get_prop_ascii x52 "bottom")
+      fun (x56 : Ojs.t) ->
+      { width = Ojs.float_of_js (Ojs.get_prop_ascii x56 "width")
+      ; height = Ojs.float_of_js (Ojs.get_prop_ascii x56 "height")
+      ; x = Ojs.float_of_js (Ojs.get_prop_ascii x56 "x")
+      ; y = Ojs.float_of_js (Ojs.get_prop_ascii x56 "y")
+      ; top = Ojs.float_of_js (Ojs.get_prop_ascii x56 "top")
+      ; left = Ojs.float_of_js (Ojs.get_prop_ascii x56 "left")
+      ; right = Ojs.float_of_js (Ojs.get_prop_ascii x56 "right")
+      ; bottom = Ojs.float_of_js (Ojs.get_prop_ascii x56 "bottom")
       }
 
     and t_to_js : t -> Ojs.t =
-      fun (x51 : t) ->
+      fun (x55 : t) ->
       Ojs.obj
-        [| "width", Ojs.float_to_js x51.width
-         ; "height", Ojs.float_to_js x51.height
-         ; "x", Ojs.float_to_js x51.x
-         ; "y", Ojs.float_to_js x51.y
-         ; "top", Ojs.float_to_js x51.top
-         ; "left", Ojs.float_to_js x51.left
-         ; "right", Ojs.float_to_js x51.right
-         ; "bottom", Ojs.float_to_js x51.bottom
+        [| "width", Ojs.float_to_js x55.width
+         ; "height", Ojs.float_to_js x55.height
+         ; "x", Ojs.float_to_js x55.x
+         ; "y", Ojs.float_to_js x55.y
+         ; "top", Ojs.float_to_js x55.top
+         ; "left", Ojs.float_to_js x55.left
+         ; "right", Ojs.float_to_js x55.right
+         ; "bottom", Ojs.float_to_js x55.bottom
         |]
     ;;
   end
@@ -399,19 +447,19 @@ module Reference_element = struct
     type t = { get_bounding_client_rect : unit -> Client_rect_object.t }
 
     let rec t_of_js : Ojs.t -> t =
-      fun (x54 : Ojs.t) ->
+      fun (x58 : Ojs.t) ->
       { get_bounding_client_rect =
           (fun () ->
             Client_rect_object.t_of_js
-              (Ojs.apply (Ojs.get_prop_ascii x54 "getBoundingClientRect") [||]))
+              (Ojs.apply (Ojs.get_prop_ascii x58 "getBoundingClientRect") [||]))
       }
 
     and t_to_js : t -> Ojs.t =
-      fun (x53 : t) ->
+      fun (x57 : t) ->
       Ojs.obj
         [| ( "getBoundingClientRect"
            , Ojs.fun_to_js 1 (fun _ ->
-               Client_rect_object.t_to_js (x53.get_bounding_client_rect ())) )
+               Client_rect_object.t_to_js (x57.get_bounding_client_rect ())) )
         |]
     ;;
   end
@@ -422,10 +470,10 @@ module Reference_element = struct
     ]
 
   let rec t_to_js : t -> Ojs.t =
-    fun (x55 : [ `Virtual of Virtual_element.t | `Dom of Dom_html.element Js.t ]) ->
-    match x55 with
-    | `Virtual x56 -> Virtual_element.t_to_js x56
-    | `Dom x57 -> Js.t_to_js Dom_html.element_to_js x57
+    fun (x59 : [ `Virtual of Virtual_element.t | `Dom of Dom_html.element Js.t ]) ->
+    match x59 with
+    | `Virtual x60 -> Virtual_element.t_to_js x60
+    | `Dom x61 -> Js.t_to_js Dom_html.element_to_js x61
   ;;
 end
 
@@ -438,20 +486,20 @@ module Compute_position = struct
       }
 
     let rec t_of_js : Ojs.t -> t =
-      fun (x65 : Ojs.t) ->
+      fun (x69 : Ojs.t) ->
       { placement =
-          Ojs.option_of_js Placement.t_of_js (Ojs.get_prop_ascii x65 "placement")
-      ; strategy = Strategy.t_of_js (Ojs.get_prop_ascii x65 "strategy")
+          Ojs.option_of_js Placement.t_of_js (Ojs.get_prop_ascii x69 "placement")
+      ; strategy = Strategy.t_of_js (Ojs.get_prop_ascii x69 "strategy")
       ; middleware =
-          Ojs.list_of_js Middleware.t_of_js (Ojs.get_prop_ascii x65 "middleware")
+          Ojs.list_of_js Middleware.t_of_js (Ojs.get_prop_ascii x69 "middleware")
       }
 
     and t_to_js : t -> Ojs.t =
-      fun (x62 : t) ->
+      fun (x66 : t) ->
       Ojs.obj
-        [| "placement", Ojs.option_to_js Placement.t_to_js x62.placement
-         ; "strategy", Strategy.t_to_js x62.strategy
-         ; "middleware", Ojs.list_to_js Middleware.t_to_js x62.middleware
+        [| "placement", Ojs.option_to_js Placement.t_to_js x66.placement
+         ; "strategy", Strategy.t_to_js x66.strategy
+         ; "middleware", Ojs.list_to_js Middleware.t_to_js x66.middleware
         |]
     ;;
   end
@@ -463,28 +511,28 @@ module Compute_position = struct
       }
 
     let rec arrow_of_js : Ojs.t -> arrow =
-      fun (x71 : Ojs.t) ->
-      { x = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x71 "x")
-      ; y = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x71 "y")
+      fun (x75 : Ojs.t) ->
+      { x = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x75 "x")
+      ; y = Ojs.option_of_js Ojs.float_of_js (Ojs.get_prop_ascii x75 "y")
       }
 
     and arrow_to_js : arrow -> Ojs.t =
-      fun (x68 : arrow) ->
+      fun (x72 : arrow) ->
       Ojs.obj
-        [| "x", Ojs.option_to_js Ojs.float_to_js x68.x
-         ; "y", Ojs.option_to_js Ojs.float_to_js x68.y
+        [| "x", Ojs.option_to_js Ojs.float_to_js x72.x
+         ; "y", Ojs.option_to_js Ojs.float_to_js x72.y
         |]
     ;;
 
     type middleware_data = { arrow : arrow option }
 
     let rec middleware_data_of_js : Ojs.t -> middleware_data =
-      fun (x76 : Ojs.t) ->
-      { arrow = Ojs.option_of_js arrow_of_js (Ojs.get_prop_ascii x76 "arrow") }
+      fun (x80 : Ojs.t) ->
+      { arrow = Ojs.option_of_js arrow_of_js (Ojs.get_prop_ascii x80 "arrow") }
 
     and middleware_data_to_js : middleware_data -> Ojs.t =
-      fun (x74 : middleware_data) ->
-      Ojs.obj [| "arrow", Ojs.option_to_js arrow_to_js x74.arrow |]
+      fun (x78 : middleware_data) ->
+      Ojs.obj [| "arrow", Ojs.option_to_js arrow_to_js x78.arrow |]
     ;;
 
     type t =
@@ -496,54 +544,54 @@ module Compute_position = struct
       }
 
     let rec t_of_js : Ojs.t -> t =
-      fun (x80 : Ojs.t) ->
-      { x = Ojs.float_of_js (Ojs.get_prop_ascii x80 "x")
-      ; y = Ojs.float_of_js (Ojs.get_prop_ascii x80 "y")
-      ; placement = Placement.t_of_js (Ojs.get_prop_ascii x80 "placement")
-      ; strategy = Strategy.t_of_js (Ojs.get_prop_ascii x80 "strategy")
+      fun (x84 : Ojs.t) ->
+      { x = Ojs.float_of_js (Ojs.get_prop_ascii x84 "x")
+      ; y = Ojs.float_of_js (Ojs.get_prop_ascii x84 "y")
+      ; placement = Placement.t_of_js (Ojs.get_prop_ascii x84 "placement")
+      ; strategy = Strategy.t_of_js (Ojs.get_prop_ascii x84 "strategy")
       ; middleware_data =
-          Ojs.option_of_js middleware_data_of_js (Ojs.get_prop_ascii x80 "middlewareData")
+          Ojs.option_of_js middleware_data_of_js (Ojs.get_prop_ascii x84 "middlewareData")
       }
 
     and t_to_js : t -> Ojs.t =
-      fun (x78 : t) ->
+      fun (x82 : t) ->
       Ojs.obj
-        [| "x", Ojs.float_to_js x78.x
-         ; "y", Ojs.float_to_js x78.y
-         ; "placement", Placement.t_to_js x78.placement
-         ; "strategy", Strategy.t_to_js x78.strategy
-         ; "middlewareData", Ojs.option_to_js middleware_data_to_js x78.middleware_data
+        [| "x", Ojs.float_to_js x82.x
+         ; "y", Ojs.float_to_js x82.y
+         ; "placement", Placement.t_to_js x82.placement
+         ; "strategy", Strategy.t_to_js x82.strategy
+         ; "middlewareData", Ojs.option_to_js middleware_data_to_js x82.middleware_data
         |]
     ;;
   end
 
   type t = Ojs.t
 
-  let rec t_of_js : Ojs.t -> t = fun (x83 : Ojs.t) -> x83
-  and t_to_js : t -> Ojs.t = fun (x82 : Ojs.t) -> x82
+  let rec t_of_js : Ojs.t -> t = fun (x87 : Ojs.t) -> x87
+  and t_to_js : t -> Ojs.t = fun (x86 : Ojs.t) -> x86
 
   let then_ : t -> (Then_args.t -> unit) -> unit =
-    fun (x86 : t) (x84 : Then_args.t -> unit) ->
+    fun (x90 : t) (x88 : Then_args.t -> unit) ->
     ignore
       (Ojs.call
-         (t_to_js x86)
+         (t_to_js x90)
          "then"
-         [| Ojs.fun_to_js 1 (fun (x85 : Ojs.t) -> x84 (Then_args.t_of_js x85)) |])
+         [| Ojs.fun_to_js 1 (fun (x89 : Ojs.t) -> x88 (Then_args.t_of_js x89)) |])
   ;;
 
   let create
     : anchor:Reference_element.t -> floating:Dom_html.element Js.t -> Options.t -> t
     =
-    fun ~anchor:(x87 : Reference_element.t)
-        ~floating:(x88 : Dom_html.element Js.t)
-        (x90 : Options.t) ->
+    fun ~anchor:(x91 : Reference_element.t)
+      ~floating:(x92 : Dom_html.element Js.t)
+      (x94 : Options.t) ->
     t_of_js
       (Ojs.call
          (Ojs.get_prop_ascii Ojs.global "FloatingUIDOM")
          "computePosition"
-         [| Reference_element.t_to_js x87
-          ; Js.t_to_js Dom_html.element_to_js x88
-          ; Options.t_to_js x90
+         [| Reference_element.t_to_js x91
+          ; Js.t_to_js Dom_html.element_to_js x92
+          ; Options.t_to_js x94
          |])
   ;;
 end
@@ -551,25 +599,25 @@ end
 module Auto_update_handle = struct
   type t = Ojs.t
 
-  let rec t_of_js : Ojs.t -> t = fun (x92 : Ojs.t) -> x92
-  and t_to_js : t -> Ojs.t = fun (x91 : Ojs.t) -> x91
+  let rec t_of_js : Ojs.t -> t = fun (x96 : Ojs.t) -> x96
+  and t_to_js : t -> Ojs.t = fun (x95 : Ojs.t) -> x95
 
   let create
     :  anchor:Reference_element.t -> floating:Dom_html.element Js.t
     -> update:(unit -> unit) -> t
     =
-    fun ~anchor:(x93 : Reference_element.t)
-        ~floating:(x94 : Dom_html.element Js.t)
-        ~update:(x96 : unit -> unit) ->
+    fun ~anchor:(x97 : Reference_element.t)
+      ~floating:(x98 : Dom_html.element Js.t)
+      ~update:(x100 : unit -> unit) ->
     t_of_js
       (Ojs.call
          (Ojs.get_prop_ascii Ojs.global "FloatingUIDOM")
          "autoUpdate"
-         [| Reference_element.t_to_js x93
-          ; Js.t_to_js Dom_html.element_to_js x94
-          ; Ojs.fun_to_js 1 (fun _ -> x96 ())
+         [| Reference_element.t_to_js x97
+          ; Js.t_to_js Dom_html.element_to_js x98
+          ; Ojs.fun_to_js 1 (fun _ -> x100 ())
          |])
   ;;
 
-  let cleanup : t -> unit = fun (x97 : t) -> ignore (Ojs.apply (t_to_js x97) [||])
+  let cleanup : t -> unit = fun (x101 : t) -> ignore (Ojs.apply (t_to_js x101) [||])
 end

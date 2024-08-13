@@ -1,7 +1,8 @@
 open Js_of_ocaml
 open Virtual_dom
 
-(** Used to create event listeners with access to the element itself.  *)
+(** A lower-level API for creating event listeners with access to the element they are
+    attached to. Not easily testable.  *)
 
 val add_event_listener
   :  (#Dom_html.eventTarget as 'a) Js.t

@@ -50,6 +50,18 @@ module Strategy : sig
   [@@deriving sexp, sexp_grammar, equal, compare, enumerate]
 end
 
+module Match_anchor_side : sig
+  (** [Grow_to_match] will set [min-width] or [min-height]; [Match_exactly] will set [width] or [height],
+      and [Shrink_to_match] will set [max-width] or [max-height].
+
+      If not set here, max height and width will be set to the available space. *)
+  type t =
+    | Grow_to_match
+    | Match_exactly
+    | Shrink_to_match
+  [@@deriving sexp, sexp_grammar, equal, compare, enumerate]
+end
+
 (** {2 Anchoring} *)
 
 module Anchor : sig
@@ -80,6 +92,7 @@ val update_position
   :  ?arrow_selector:string
   -> anchor:Anchor.t
   -> floating:Dom_html.element Js.t
+  -> match_anchor_side_length:Match_anchor_side.t option
   -> Position.t
   -> Alignment.t
   -> Offset.t
@@ -101,6 +114,7 @@ val auto_update_position
   :  ?arrow_selector:string
   -> anchor:Anchor.t
   -> floating:Dom_html.element Js.t
+  -> match_anchor_side_length:Match_anchor_side.t option
   -> Position.t
   -> Alignment.t
   -> Offset.t
@@ -112,16 +126,27 @@ val cancel_auto_update : auto_update_handle -> unit
 (** {2 Control and positioning hooks} *)
 
 (** [position_me] returns an attr which, when added to a vdom node, will automatically
-    position it relative to the anchor, with auto-update.  *)
+    position it relative to the anchor, with auto-update.
+
+    If provided, [prepare] will run once befre positioning is applied, when the element is
+    mounted. The most common use case is opening a popover before starting autopositioning
+    to avoid a flicker.
+
+    If [match_anchor_side_length] is set to true, the popover's main axis
+    (width if position is Top/Bottom, height if position is Left/Right) will be set to
+    have a length equal to the corresponding axis of the anchor. This is particularly
+    useful for dropdowns and typeaheads. *)
 val position_me
-  :  ?arrow_selector:string
+  :  ?prepare:(Dom_html.element Js.t -> unit)
+  -> ?arrow_selector:string
   -> ?position:Position.t
   -> ?alignment:Alignment.t
   -> ?offset:Offset.t
+  -> ?match_anchor_side_length:Match_anchor_side.t
   -> Anchor.t
   -> Virtual_dom.Vdom.Attr.t
 
-(** {2 Accessors for positioning data provided by floating_positioning} *)
+(** {2 Accessors for styles and data provided by floating_positioning} *)
 
 module Accessors : sig
   (** These set up some "config" styles that help floating ui run more smoothly,
@@ -131,4 +156,20 @@ module Accessors : sig
   (** If using an arrow, it should be placed in an element that has this attribute.
       It will position and z-index the contents. *)
   val arrow_container : Virtual_dom.Vdom.Attr.t
+end
+
+module For_testing_position_me_hook : sig
+  type t =
+    { prepare : Dom_html.element Js.t -> unit
+    ; position : Position.t
+    ; alignment : Alignment.t
+    ; offset : Offset.t
+    ; strategy : Strategy.t
+    ; match_anchor_side_length : Match_anchor_side.t option
+    ; arrow_selector : string option
+    ; anchor : Anchor.t
+    }
+
+  val type_id : t Type_equal.Id.t
+  val hook_name : string
 end

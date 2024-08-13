@@ -4,12 +4,16 @@ open Js_of_ocaml
 
 type t
 
-val apply_patch : t -> Vdom.Node.t -> unit
+val apply_patch : t -> Vdom.Node.t -> t
 val create : Dom_html.element Js.t -> Vdom.Node.t -> t
 val destroy : t -> unit
 val element : t -> Dom_html.element Js.t
 
 module For_popovers : sig
+  val find_nearest_popover_ancestor
+    :  Dom_html.element Js.t
+    -> Dom_html.element Js.t option
+
   val find_popover_portal_root : Dom_html.element Js.t -> Dom_html.element Js.t
 
   (** [nestable_popover_attr] should be set on the <div popover=... /> DOM element of
@@ -25,4 +29,8 @@ module For_popovers : sig
       contents such that it can be used as the portal root for any child popover
       elements. *)
   val nested_popover_root : Vdom.Node.t
+end
+
+module For_testing : sig
+  val vdom : t -> Vdom.Node.t
 end

@@ -417,12 +417,11 @@ function _defineProperty(obj, key, value) {
 function _objectWithoutPropertiesLoose(source, excluded) {
   if (source == null) return {};
   var target = {};
-  var sourceKeys = Object.keys(source);
-  var key, i;
-  for (i = 0; i < sourceKeys.length; i++) {
-    key = sourceKeys[i];
-    if (excluded.indexOf(key) >= 0) continue;
-    target[key] = source[key];
+  for (var key in source) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      if (excluded.indexOf(key) >= 0) continue;
+      target[key] = source[key];
+    }
   }
   return target;
 }
@@ -604,12 +603,20 @@ function getPaddingObject(padding) {
   };
 }
 function rectToClientRect(rect) {
-  return _objectSpread2(_objectSpread2({}, rect), {}, {
-    top: rect.y,
-    left: rect.x,
-    right: rect.x + rect.width,
-    bottom: rect.y + rect.height
-  });
+  var x = rect.x,
+    y = rect.y,
+    width = rect.width,
+    height = rect.height;
+  return {
+    width: width,
+    height: height,
+    top: y,
+    left: x,
+    right: x + width,
+    bottom: y + height,
+    x: x,
+    y: y
+  };
 }
 
 var _excluded = ["crossAxis", "alignment", "allowedPlacements", "autoAlignment"],
@@ -804,7 +811,7 @@ var computePosition$1 = /*#__PURE__*/function () {
  * - 0 = lies flush with the boundary
  * @see https://floating-ui.com/docs/detectOverflow
  */
-function detectOverflow(_x4, _x5) {
+function detectOverflow$1(_x4, _x5) {
   return _detectOverflow.apply(this, arguments);
 }
 /**
@@ -877,10 +884,12 @@ function _detectOverflow() {
         case 33:
           _context10.t11 = _context10.sent;
           clippingClientRect = (0, _context10.t0)(_context10.t11);
-          rect = elementContext === 'floating' ? _objectSpread2(_objectSpread2({}, rects.floating), {}, {
+          rect = elementContext === 'floating' ? {
             x: x,
-            y: y
-          }) : rects.reference;
+            y: y,
+            width: rects.floating.width,
+            height: rects.floating.height
+          } : rects.reference;
           _context10.next = 38;
           return platform.getOffsetParent == null ? void 0 : platform.getOffsetParent(elements.floating);
         case 38:
@@ -1071,7 +1080,7 @@ var autoPlacement$1 = function autoPlacement(options) {
               _evaluate = evaluate(options, state), _evaluate$crossAxis = _evaluate.crossAxis, crossAxis = _evaluate$crossAxis === void 0 ? false : _evaluate$crossAxis, alignment = _evaluate.alignment, _evaluate$allowedPlac = _evaluate.allowedPlacements, allowedPlacements = _evaluate$allowedPlac === void 0 ? placements : _evaluate$allowedPlac, _evaluate$autoAlignme = _evaluate.autoAlignment, autoAlignment = _evaluate$autoAlignme === void 0 ? true : _evaluate$autoAlignme, detectOverflowOptions = _objectWithoutProperties(_evaluate, _excluded);
               placements$1 = alignment !== undefined || allowedPlacements === placements ? getPlacementList(alignment || null, autoAlignment, allowedPlacements) : allowedPlacements;
               _context3.next = 5;
-              return detectOverflow(state, detectOverflowOptions);
+              return detectOverflow$1(state, detectOverflowOptions);
             case 5:
               overflow = _context3.sent;
               currentIndex = ((_middlewareData$autoP = middlewareData.autoPlacement) == null ? void 0 : _middlewareData$autoP.index) || 0;
@@ -1208,7 +1217,7 @@ var flip$1 = function flip(options) {
               }
               placements = [initialPlacement].concat(_toConsumableArray(fallbackPlacements));
               _context4.next = 14;
-              return detectOverflow(state, detectOverflowOptions);
+              return detectOverflow$1(state, detectOverflowOptions);
             case 14:
               overflow = _context4.sent;
               overflows = [];
@@ -1338,7 +1347,7 @@ var hide$1 = function hide(options) {
               break;
             case 5:
               _context5.next = 7;
-              return detectOverflow(state, _objectSpread2(_objectSpread2({}, detectOverflowOptions), {}, {
+              return detectOverflow$1(state, _objectSpread2(_objectSpread2({}, detectOverflowOptions), {}, {
                 elementContext: 'reference'
               }));
             case 7:
@@ -1352,7 +1361,7 @@ var hide$1 = function hide(options) {
               });
             case 10:
               _context5.next = 12;
-              return detectOverflow(state, _objectSpread2(_objectSpread2({}, detectOverflowOptions), {}, {
+              return detectOverflow$1(state, _objectSpread2(_objectSpread2({}, detectOverflowOptions), {}, {
                 altBoundary: true
               }));
             case 12:
@@ -1572,7 +1581,7 @@ function _convertValueToCoords() {
           isVertical = getSideAxis(placement) === 'y';
           mainAxisMulti = ['left', 'top'].includes(side) ? -1 : 1;
           crossAxisMulti = rtl && isVertical ? -1 : 1;
-          rawValue = evaluate(options, state);
+          rawValue = evaluate(options, state); // eslint-disable-next-line prefer-const
           _ref6 = typeof rawValue === 'number' ? {
             mainAxis: rawValue,
             crossAxis: 0,
@@ -1600,7 +1609,7 @@ function _convertValueToCoords() {
   }));
   return _convertValueToCoords.apply(this, arguments);
 }
-var offset = function offset(options) {
+var offset$1 = function offset(options) {
   if (options === void 0) {
     options = 0;
   }
@@ -1675,7 +1684,7 @@ var shift$1 = function shift(options) {
                 y: y
               };
               _context8.next = 5;
-              return detectOverflow(state, detectOverflowOptions);
+              return detectOverflow$1(state, detectOverflowOptions);
             case 5:
               overflow = _context8.sent;
               crossAxis = getSideAxis(getSide(placement));
@@ -1792,14 +1801,14 @@ var size$1 = function size(options) {
     options: options,
     fn: function fn(state) {
       return _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee9() {
-        var placement, rects, platform, elements, _evaluate7, _evaluate7$apply, apply, detectOverflowOptions, overflow, side, alignment, isYAxis, _rects$floating, width, height, heightSide, widthSide, overflowAvailableHeight, overflowAvailableWidth, noShift, availableHeight, availableWidth, maximumClippingWidth, maximumClippingHeight, xMin, xMax, yMin, yMax, nextDimensions;
+        var placement, rects, platform, elements, _evaluate7, _evaluate7$apply, apply, detectOverflowOptions, overflow, side, alignment, isYAxis, _rects$floating, width, height, heightSide, widthSide, maximumClippingHeight, maximumClippingWidth, overflowAvailableHeight, overflowAvailableWidth, noShift, availableHeight, availableWidth, xMin, xMax, yMin, yMax, nextDimensions;
         return _regeneratorRuntime().wrap(function _callee9$(_context9) {
           while (1) switch (_context9.prev = _context9.next) {
             case 0:
               placement = state.placement, rects = state.rects, platform = state.platform, elements = state.elements;
               _evaluate7 = evaluate(options, state), _evaluate7$apply = _evaluate7.apply, apply = _evaluate7$apply === void 0 ? function () {} : _evaluate7$apply, detectOverflowOptions = _objectWithoutProperties(_evaluate7, _excluded5);
               _context9.next = 4;
-              return detectOverflow(state, detectOverflowOptions);
+              return detectOverflow$1(state, detectOverflowOptions);
             case 4:
               overflow = _context9.sent;
               side = getSide(placement);
@@ -1843,16 +1852,16 @@ var size$1 = function size(options) {
               widthSide = side;
               heightSide = alignment === 'end' ? 'top' : 'bottom';
             case 30:
-              overflowAvailableHeight = height - overflow[heightSide];
-              overflowAvailableWidth = width - overflow[widthSide];
+              maximumClippingHeight = height - overflow.top - overflow.bottom;
+              maximumClippingWidth = width - overflow.left - overflow.right;
+              overflowAvailableHeight = min(height - overflow[heightSide], maximumClippingHeight);
+              overflowAvailableWidth = min(width - overflow[widthSide], maximumClippingWidth);
               noShift = !state.middlewareData.shift;
               availableHeight = overflowAvailableHeight;
               availableWidth = overflowAvailableWidth;
               if (isYAxis) {
-                maximumClippingWidth = width - overflow.left - overflow.right;
                 availableWidth = alignment || noShift ? min(overflowAvailableWidth, maximumClippingWidth) : maximumClippingWidth;
               } else {
-                maximumClippingHeight = height - overflow.top - overflow.bottom;
                 availableHeight = alignment || noShift ? min(overflowAvailableHeight, maximumClippingHeight) : maximumClippingHeight;
               }
               if (noShift && !alignment) {
@@ -1866,18 +1875,18 @@ var size$1 = function size(options) {
                   availableHeight = height - 2 * (yMin !== 0 || yMax !== 0 ? yMin + yMax : max(overflow.top, overflow.bottom));
                 }
               }
-              _context9.next = 39;
+              _context9.next = 41;
               return apply(_objectSpread2(_objectSpread2({}, state), {}, {
                 availableWidth: availableWidth,
                 availableHeight: availableHeight
               }));
-            case 39:
-              _context9.next = 41;
-              return platform.getDimensions(elements.floating);
             case 41:
+              _context9.next = 43;
+              return platform.getDimensions(elements.floating);
+            case 43:
               nextDimensions = _context9.sent;
               if (!(width !== nextDimensions.width || height !== nextDimensions.height)) {
-                _context9.next = 44;
+                _context9.next = 46;
                 break;
               }
               return _context9.abrupt("return", {
@@ -1885,9 +1894,9 @@ var size$1 = function size(options) {
                   rects: true
                 }
               });
-            case 44:
+            case 46:
               return _context9.abrupt("return", {});
-            case 45:
+            case 47:
             case "end":
               return _context9.stop();
           }
@@ -1957,9 +1966,8 @@ function getContainingBlock(element) {
   while (isHTMLElement(currentNode) && !isLastTraversableNode(currentNode)) {
     if (isContainingBlock(currentNode)) {
       return currentNode;
-    } else {
-      currentNode = getParentNode(currentNode);
     }
+    currentNode = getParentNode(currentNode);
   }
   return null;
 }
@@ -2149,10 +2157,10 @@ function getBoundingClientRect(element, includeScale, isFixedStrategy, offsetPar
   });
 }
 var topLayerSelectors = [':popover-open', ':modal'];
-function isTopLayer(floating) {
+function isTopLayer(element) {
   return topLayerSelectors.some(function (selector) {
     try {
-      return floating.matches(selector);
+      return element.matches(selector);
     } catch (e) {
       return false;
     }
@@ -2335,7 +2343,7 @@ function getClippingRect(_ref) {
     boundary = _ref.boundary,
     rootBoundary = _ref.rootBoundary,
     strategy = _ref.strategy;
-  var elementClippingAncestors = boundary === 'clippingAncestors' ? getClippingElementAncestors(element, this._c) : [].concat(boundary);
+  var elementClippingAncestors = boundary === 'clippingAncestors' ? isTopLayer(element) ? [] : getClippingElementAncestors(element, this._c) : [].concat(boundary);
   var clippingAncestors = [].concat(_toConsumableArray(elementClippingAncestors), [rootBoundary]);
   var firstClippingAncestor = clippingAncestors[0];
   var clippingRect = clippingAncestors.reduce(function (accRect, clippingAncestor) {
@@ -2393,6 +2401,9 @@ function getRectRelativeToOffsetParent(element, offsetParent, strategy) {
     height: rect.height
   };
 }
+function isStaticPositioned(element) {
+  return getComputedStyle(element).position === 'static';
+}
 function getTrueOffsetParent(element, polyfill) {
   if (!isHTMLElement(element) || getComputedStyle(element).position === 'fixed') {
     return null;
@@ -2406,50 +2417,60 @@ function getTrueOffsetParent(element, polyfill) {
 // Gets the closest ancestor positioned element. Handles some edge cases,
 // such as table ancestors and cross browser bugs.
 function getOffsetParent(element, polyfill) {
-  var window = getWindow(element);
-  if (!isHTMLElement(element) || isTopLayer(element)) {
-    return window;
+  var win = getWindow(element);
+  if (isTopLayer(element)) {
+    return win;
+  }
+  if (!isHTMLElement(element)) {
+    var svgOffsetParent = getParentNode(element);
+    while (svgOffsetParent && !isLastTraversableNode(svgOffsetParent)) {
+      if (isElement(svgOffsetParent) && !isStaticPositioned(svgOffsetParent)) {
+        return svgOffsetParent;
+      }
+      svgOffsetParent = getParentNode(svgOffsetParent);
+    }
+    return win;
   }
   var offsetParent = getTrueOffsetParent(element, polyfill);
-  while (offsetParent && isTableElement(offsetParent) && getComputedStyle(offsetParent).position === 'static') {
+  while (offsetParent && isTableElement(offsetParent) && isStaticPositioned(offsetParent)) {
     offsetParent = getTrueOffsetParent(offsetParent, polyfill);
   }
-  if (offsetParent && (getNodeName(offsetParent) === 'html' || getNodeName(offsetParent) === 'body' && getComputedStyle(offsetParent).position === 'static' && !isContainingBlock(offsetParent))) {
-    return window;
+  if (offsetParent && isLastTraversableNode(offsetParent) && isStaticPositioned(offsetParent) && !isContainingBlock(offsetParent)) {
+    return win;
   }
-  return offsetParent || getContainingBlock(element) || window;
+  return offsetParent || getContainingBlock(element) || win;
 }
 var getElementRects = /*#__PURE__*/function () {
   var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(data) {
-    var getOffsetParentFn, getDimensionsFn;
+    var getOffsetParentFn, getDimensionsFn, floatingDimensions;
     return _regeneratorRuntime().wrap(function _callee$(_context) {
       while (1) switch (_context.prev = _context.next) {
         case 0:
           getOffsetParentFn = this.getOffsetParent || getOffsetParent;
           getDimensionsFn = this.getDimensions;
+          _context.next = 4;
+          return getDimensionsFn(data.floating);
+        case 4:
+          floatingDimensions = _context.sent;
           _context.t0 = getRectRelativeToOffsetParent;
           _context.t1 = data.reference;
-          _context.next = 6;
+          _context.next = 9;
           return getOffsetParentFn(data.floating);
-        case 6:
+        case 9:
           _context.t2 = _context.sent;
           _context.t3 = data.strategy;
           _context.t4 = (0, _context.t0)(_context.t1, _context.t2, _context.t3);
-          _context.t5 = _objectSpread2;
-          _context.t6 = {
+          _context.t5 = {
             x: 0,
-            y: 0
+            y: 0,
+            width: floatingDimensions.width,
+            height: floatingDimensions.height
           };
-          _context.next = 13;
-          return getDimensionsFn(data.floating);
-        case 13:
-          _context.t7 = _context.sent;
-          _context.t8 = (0, _context.t5)(_context.t6, _context.t7);
           return _context.abrupt("return", {
             reference: _context.t4,
-            floating: _context.t8
+            floating: _context.t5
           });
-        case 16:
+        case 14:
         case "end":
           return _context.stop();
       }
@@ -2522,9 +2543,11 @@ function observeMove(element, onMove) {
           return refresh();
         }
         if (!ratio) {
+          // If the reference is clipped, the ratio is 0. Throttle the refresh
+          // to prevent an infinite loop of updates.
           timeoutId = setTimeout(function () {
             refresh(false, 1e-7);
-          }, 100);
+          }, 1000);
         } else {
           refresh(false, ratio);
         }
@@ -2631,6 +2654,25 @@ function autoUpdate(reference, floating, update, options) {
     }
   };
 }
+
+/**
+ * Resolves with an object of overflow side offsets that determine how much the
+ * element is overflowing a given clipping boundary on each side.
+ * - positive = overflowing the boundary by that number of pixels
+ * - negative = how many pixels left before it will overflow
+ * - 0 = lies flush with the boundary
+ * @see https://floating-ui.com/docs/detectOverflow
+ */
+var detectOverflow = detectOverflow$1;
+
+/**
+ * Modifies the placement by translating the floating element along the
+ * specified axes.
+ * A number (shorthand for `mainAxis` or distance), or an axes configuration
+ * object may be passed.
+ * @see https://floating-ui.com/docs/offset
+ */
+var offset = offset$1;
 
 /**
  * Optimizes the visibility of the floating element by choosing the placement

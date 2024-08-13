@@ -12,9 +12,11 @@ build: [
 depends: [
   "ocaml" {>= "5.1.0"}
   "core"
+  "incr_dom"
   "js_of_ocaml_patches"
   "ppx_css"
   "ppx_jane"
+  "sexplib"
   "virtual_dom"
   "dune"                {>= "3.11.0"}
   "gen_js_api"          {>= "1.0.8"}

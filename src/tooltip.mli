@@ -3,7 +3,8 @@ open Virtual_dom
 open Floating_positioning_new
 
 val attr
-  :  ?position:Position.t
+  :  ?tooltip_attrs:Vdom.Attr.t list
+  -> ?position:Position.t
   -> ?alignment:Alignment.t
   -> ?offset:Offset.t
   -> ?show_delay:Time_ns.Span.t

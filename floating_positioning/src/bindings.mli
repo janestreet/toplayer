@@ -52,9 +52,25 @@ module Middleware : sig
   module Size : sig
     module Options : sig
       module Apply_options : sig
+        module Rect : sig
+          type t =
+            { width : float
+            ; height : float
+            }
+        end
+
+        module Element_rects : sig
+          type t =
+            { reference : Rect.t
+            ; floating : Rect.t
+            }
+        end
+
         type t =
           { available_width : float
           ; available_height : float
+          ; rects : Element_rects.t
+          ; placement : Placement.t
           }
       end
 
@@ -179,7 +195,7 @@ module Compute_position : sig
     -> floating:Dom_html.element Js.t
     -> Options.t
     -> t
-    [@@js.global "FloatingUIDOM.computePosition"]
+  [@@js.global "FloatingUIDOM.computePosition"]
 end
 
 module Auto_update_handle : sig
@@ -190,7 +206,7 @@ module Auto_update_handle : sig
     -> floating:Dom_html.element Js.t
     -> update:(unit -> unit)
     -> t
-    [@@js.global "FloatingUIDOM.autoUpdate"]
+  [@@js.global "FloatingUIDOM.autoUpdate"]
 
   val cleanup : t -> unit [@@js.apply]
 end
