@@ -2,8 +2,6 @@ open! Core
 open Virtual_dom
 open Js_of_ocaml
 
-let is_in_browser = Js.Optdef.test (Obj.magic Dom_html.document : _ Js.Optdef.t)
-
 type t =
   { parent : Dom_html.element Js.t
   ; element : Dom_html.element Js.t
@@ -28,7 +26,7 @@ let apply_patch_for_test portal vdom =
 ;;
 
 let apply_patch =
-  match is_in_browser with
+  match Am_running_how_js.am_in_browser with
   | true -> apply_patch_for_browser
   | false -> apply_patch_for_test
 ;;
@@ -48,7 +46,7 @@ let create_for_test parent vdom =
 ;;
 
 let create =
-  match is_in_browser with
+  match Am_running_how_js.am_in_browser with
   | true -> create_for_browser
   | false -> create_for_test
 ;;
@@ -71,7 +69,7 @@ let destroy_for_browser portal =
 let destroy_for_tests _ = ()
 
 let destroy =
-  match is_in_browser with
+  match Am_running_how_js.am_in_browser with
   | true -> destroy_for_browser
   | false -> destroy_for_tests
 ;;

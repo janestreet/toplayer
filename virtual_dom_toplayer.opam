@@ -11,6 +11,7 @@ build: [
 ]
 depends: [
   "ocaml" {>= "5.1.0"}
+  "am_running_how_js"
   "core"
   "incr_dom"
   "js_of_ocaml_patches"

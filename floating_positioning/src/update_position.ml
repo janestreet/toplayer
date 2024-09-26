@@ -189,7 +189,7 @@ let single_update
         ] )
   in
   let arrow_element =
-    let%bind.Option arrow_selector = arrow_selector in
+    let%bind.Option arrow_selector in
     floating##querySelector (Js.string arrow_selector) |> Js.Opt.to_option
   in
   let arrow_middleware =
