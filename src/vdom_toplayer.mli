@@ -13,7 +13,7 @@ module Match_anchor_side := Floating_positioning_new.Match_anchor_side
     custom atts for borders/padding/style, possibly provide an `arrow` element, and offer
     a slightly simpler API for users of your UI component library.
 
-    [popover] is intended to be used through the [bonsai_web_ui_popover] library.
+    [popover] is intended to be used through the [bonsai_web_ui_toplayer] library.
 
     Note that the DOM for all popovers will be placed outside of the app root.
     If you want global event listeners (including keyboard shortcuts) to work inside
