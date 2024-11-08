@@ -2,14 +2,16 @@ open! Core
 open Virtual_dom
 open Js_of_ocaml
 
-let is_in_browser = Js.Optdef.test (Obj.magic Dom_html.document : _ Js.Optdef.t)
-
 type t =
   { parent : Dom_html.element Js.t
   ; element : Dom_html.element Js.t
   ; vdom : Vdom.Node.t
   }
 [@@deriving fields ~getters]
+
+let maybe_mark text =
+  if !Config.mark_events then Javascript_profiling.mark ~prominent:true text
+;;
 
 let apply_patch_for_browser portal vdom =
   match phys_equal portal.vdom vdom with
@@ -27,10 +29,16 @@ let apply_patch_for_test portal vdom =
   | false -> { portal with vdom }
 ;;
 
-let apply_patch =
-  match is_in_browser with
+let apply_patch' =
+  match Am_running_how_js.am_in_browser with
   | true -> apply_patch_for_browser
   | false -> apply_patch_for_test
+;;
+
+let apply_patch t vdom =
+  let r = apply_patch' t vdom in
+  maybe_mark "Portal Patched";
+  r
 ;;
 
 let create_for_browser parent vdom =
@@ -39,7 +47,8 @@ let create_for_browser parent vdom =
     Dom.appendChild parent element;
     { parent; element; vdom = Vdom.Node.div [] }
   in
-  apply_patch portal vdom
+  maybe_mark "Portal Created";
+  apply_patch' portal vdom
 ;;
 
 let create_for_test parent vdom =
@@ -48,7 +57,7 @@ let create_for_test parent vdom =
 ;;
 
 let create =
-  match is_in_browser with
+  match Am_running_how_js.am_in_browser with
   | true -> create_for_browser
   | false -> create_for_test
 ;;
@@ -65,13 +74,14 @@ let destroy_for_browser portal =
      The use of [none_deprecated] is correct here, because we want to remove the
      element, not replace it with a new one. *)
   apply_patch portal (Vdom.Node.none_deprecated [@alert "-deprecated"])
-  |> (ignore : t -> unit)
+  |> (ignore : t -> unit);
+  maybe_mark "Portal Destroyed"
 ;;
 
 let destroy_for_tests _ = ()
 
 let destroy =
-  match is_in_browser with
+  match Am_running_how_js.am_in_browser with
   | true -> destroy_for_browser
   | false -> destroy_for_tests
 ;;
@@ -88,6 +98,21 @@ module For_popovers = struct
     |> Js.Opt.to_option
   ;;
 
+  let global_toplayer_root =
+    lazy
+      (let elt = Dom_html.document##createElement (Js.string "div") in
+       (* This class is here mostly for documentation: if you inspect element a Bonsai app,
+          it explains why there's an extra div under the document root.
+          The random string at the end is part of a UUID, and is intended to discourage
+          people from using this class for styling. *)
+       let class_ = "toplayer_portal_root_aa63f6b8d3b4" in
+       elt##setAttribute (Js.string "class") (Js.string class_);
+       let (_ : Dom.node Js.t) =
+         Dom_html.document##.documentElement##appendChild (elt :> Dom.node Js.t)
+       in
+       elt)
+  ;;
+
   let find_popover_portal_root (anchor : Dom_html.element Js.t) =
     let (root : Dom_html.element Js.t option) =
       let%bind.Option popover_ancestor = find_nearest_popover_ancestor anchor in
@@ -95,7 +120,7 @@ module For_popovers = struct
     in
     match root with
     | Some node -> node
-    | None -> Dom_html.document##.documentElement
+    | None -> force global_toplayer_root
   ;;
 
   let portal_root class_ =

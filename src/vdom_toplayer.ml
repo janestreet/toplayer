@@ -21,3 +21,7 @@ module For_testing_bonsai_web_ui_toplayer = struct
   include Popover.For_testing_bonsai_web_ui_toplayer
   include Modal.For_testing_bonsai_web_ui_toplayer
 end
+
+module For_debugging_frame_delay = struct
+  let mark_events = Config.mark_events
+end

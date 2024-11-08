@@ -11,6 +11,7 @@ build: [
 ]
 depends: [
   "ocaml" {>= "5.1.0"}
+  "am_running_how_js"
   "core"
   "incr_dom"
   "js_of_ocaml_patches"
@@ -19,7 +20,7 @@ depends: [
   "sexplib"
   "virtual_dom"
   "dune"                {>= "3.11.0"}
-  "gen_js_api"          {>= "1.0.8"}
+  "gen_js_api"          {= "1.1.2+jst"}
   "js_of_ocaml"         {>= "5.1.1" & < "5.7.0"}
   "js_of_ocaml-ppx"     {>= "5.1.1" & < "5.7.0"}
 ]
