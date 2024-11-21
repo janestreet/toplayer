@@ -139,3 +139,7 @@ module For_testing_bonsai_web_ui_toplayer : sig
   include module type of Popover.For_testing_bonsai_web_ui_toplayer
   include module type of Modal.For_testing_bonsai_web_ui_toplayer
 end
+
+module For_debugging_frame_delay : sig
+  val mark_events : bool ref
+end

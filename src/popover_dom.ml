@@ -10,12 +10,18 @@ let focus_if_document_has_focus (e : Dom_html.element Js.t) =
   if Js_of_ocaml.Js.to_bool document##hasFocus then e##focus
 ;;
 
-let show_popover (e : Dom_html.element Js.t) = Js.Unsafe.meth_call e "showPopover" [||]
+let show_popover (e : Dom_html.element Js.t) =
+  let () = Js.Unsafe.meth_call e "showPopover" [||] in
+  if !Config.mark_events
+  then Javascript_profiling.mark ~prominent:true "showPopover called"
+;;
+
 let hide_popover (e : Dom_html.element Js.t) = Js.Unsafe.meth_call e "hidePopover" [||]
 let toggle_popover (e : Dom_html.element Js.t) = Js.Unsafe.meth_call e "togglePopover" [||]
 
 let is_hovered (e : Dom_html.element Js.t) =
   Js.Unsafe.meth_call e "matches" [| Js.Unsafe.inject (Js.string ":hover") |]
+  |> Js.to_bool
 ;;
 
 let is_popover (e : Dom_html.element Js.t) =
@@ -24,6 +30,7 @@ let is_popover (e : Dom_html.element Js.t) =
 
 let is_open (e : Dom_html.element Js.t) =
   Js.Unsafe.meth_call e "matches" [| Js.Unsafe.inject (Js.string ":popover-open") |]
+  |> Js.to_bool
 ;;
 
 (* By default, popover elements have `margin:auto`,
@@ -51,7 +58,7 @@ let unset_browser_styling =
 
 let element_contains node other_node =
   let open Js_of_ocaml in
-  Js.Unsafe.meth_call node "contains" [| Js.Unsafe.inject other_node |]
+  Js.Unsafe.meth_call node "contains" [| Js.Unsafe.inject other_node |] |> Js.to_bool
 ;;
 
 module Restore_focus_on_close = Vdom.Attr.Hooks.Make (struct
