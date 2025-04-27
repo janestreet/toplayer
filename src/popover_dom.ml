@@ -10,12 +10,7 @@ let focus_if_document_has_focus (e : Dom_html.element Js.t) =
   if Js_of_ocaml.Js.to_bool document##hasFocus then e##focus
 ;;
 
-let show_popover (e : Dom_html.element Js.t) =
-  let () = Js.Unsafe.meth_call e "showPopover" [||] in
-  if !Config.mark_events
-  then Javascript_profiling.mark ~prominent:true "showPopover called"
-;;
-
+let show_popover (e : Dom_html.element Js.t) = Js.Unsafe.meth_call e "showPopover" [||]
 let hide_popover (e : Dom_html.element Js.t) = Js.Unsafe.meth_call e "hidePopover" [||]
 let toggle_popover (e : Dom_html.element Js.t) = Js.Unsafe.meth_call e "togglePopover" [||]
 
@@ -31,6 +26,71 @@ let is_popover (e : Dom_html.element Js.t) =
 let is_open (e : Dom_html.element Js.t) =
   Js.Unsafe.meth_call e "matches" [| Js.Unsafe.inject (Js.string ":popover-open") |]
   |> Js.to_bool
+;;
+
+let nested_popover_root_const =
+  "nested-popover-root-priv-2ecfd118-f7b7-11ee-abec-aa63f6b8d3b4"
+;;
+
+let nestable_popover_const = "data-bonsai-popover-356c4f74-f7b7-11ee-8823-aa63f6b8d3b4"
+
+let find_nearest_popover_ancestor (element : Dom_html.element Js.t) =
+  element##closest (Js.string [%string "[%{nestable_popover_const}]"]) |> Js.Opt.to_option
+;;
+
+let find_popover_portal_root (anchor : Dom_html.element Js.t) =
+  let (root : Dom_html.element Js.t option) =
+    let%bind.Option popover_ancestor = find_nearest_popover_ancestor anchor in
+    Js.Unsafe.get popover_ancestor "lastElementChild" |> Js.Opt.to_option
+  in
+  match root with
+  | Some node -> node
+  | None -> Byo_portal_private.global_toplayer_root ()
+;;
+
+let portal_root class_ =
+  let id = Type_equal.Id.create ~name:class_ Sexplib.Conv.sexp_of_opaque in
+  let init () =
+    let div = Dom_html.createDiv Dom_html.document in
+    div##setAttribute (Js.string "class") (Js.string class_);
+    div##setAttribute (Js.string "style") (Js.string "display: contents");
+    (), (div :> Dom_html.element Js.t)
+  in
+  Vdom.Node.widget ~id ~init ()
+;;
+
+(* [nestable_popover_attr] should be set on the <div popover=... /> DOM element of
+  Bonsai tooltips/popovers, under which other popovers might be nested.
+
+  [nested_popover_root] must be the last child of any DOM element that has
+  [nestable_popover_attr].
+
+  This is fragile (for us maintainers), but gives us performance wins. *)
+let nestable_popover_attr = Vdom.Attr.create nestable_popover_const ""
+
+(* [nested_popover_root] should be included at the top-level of a given popovers
+  contents such that it can be used as the portal root for any child popover
+  elements. *)
+let nested_popover_root = portal_root nested_popover_root_const
+
+module Show_on_mount = Vdom.Attr.Hooks.Make (struct
+    module State = Unit
+
+    module Input = struct
+      type t = unit [@@deriving sexp, equal]
+
+      let combine () () = ()
+    end
+
+    let init () _ = ()
+    let on_mount () _ elem = show_popover elem
+    let on_mount = `Schedule_immediately_after_this_dom_patch_completes on_mount
+    let update ~old_input:_ ~new_input:_ _ _elem = ()
+    let destroy () () _ = ()
+  end)
+
+let show_on_mount =
+  Show_on_mount.create () |> Vdom.Attr.create_hook "vdom_toplayer_show_on_mount"
 ;;
 
 (* By default, popover elements have `margin:auto`,
@@ -51,7 +111,7 @@ let unset_browser_styling =
             }
           }
         }
-        |}]
+      |}]
   in
   Style.popover
 ;;
@@ -94,9 +154,7 @@ module Restore_focus_on_close = Vdom.Attr.Hooks.Make (struct
           (fun (e : Dom_html.focusEvent Js.t) ->
              (* If the relatedTarget is null, then the popover element is being
                 destroyed, and so the focus was inside the popover. *)
-             let related_target =
-               e##.relatedTarget |> Js.Optdef.to_option |> Option.bind ~f:Js.Opt.to_option
-             in
+             let related_target = e##.relatedTarget |> Js.Opt.to_option in
              focus_was_inside_before_close := Option.is_none related_target;
              Ui_effect.Ignore)
       in
@@ -128,7 +186,7 @@ module Restore_focus_on_close = Vdom.Attr.Hooks.Make (struct
     ;;
   end)
 
-let restore_focus_on_close =
+let restore_focus_on_close_attr =
   Vdom.Attr.create_hook
     "vdom_toplayer_restore_focus_on_close"
     (Restore_focus_on_close.create ())
@@ -168,7 +226,6 @@ let attrs kind =
          | `Manual -> "manual")
     ; unset_browser_styling
     ; tabindex_attr
-    ; restore_focus_on_close
     ; Floating_positioning_new.Accessors.floating_styling
     ]
 ;;
@@ -186,26 +243,34 @@ let wrap_arrow node =
 
 let arrow_selector = [%string "[%{arrow_data}]"]
 
-let node ?arrow ~kind ~extra_attrs content =
+let node ?arrow ~kind ~extra_attrs ~restore_focus_on_close ~overflow_auto_wrapper content =
   Vdom.Node.div
-    ~attrs:([ attrs kind; Portal.For_popovers.nestable_popover_attr ] @ extra_attrs)
+    ~attrs:
+      ([ attrs kind
+       ; (if restore_focus_on_close then restore_focus_on_close_attr else Vdom.Attr.empty)
+       ; nestable_popover_attr
+       ]
+       @ extra_attrs)
     (* [nested_popover_root] MUST be the last child, otherwise nested popovers
        will break.*)
     [ Vdom.Node.div
         ~attrs:
-          [ {%css|
-                overflow: auto;
-                height: 100%;
-                width: 100%;
-                max-width: inherit;
-                max-height: inherit;
-              |}
+          [ (if overflow_auto_wrapper
+             then
+               {%css|
+                 overflow: auto;
+                 height: 100%;
+                 width: 100%;
+                 max-width: inherit;
+                 max-height: inherit;
+               |}
+             else {%css|display: contents;|})
           ]
         [ content ]
     ; Option.value_map
         arrow
         ~f:wrap_arrow
         ~default:(Vdom.Node.none_deprecated [@alert "-deprecated"])
-    ; Portal.For_popovers.nested_popover_root
+    ; nested_popover_root
     ]
 ;;

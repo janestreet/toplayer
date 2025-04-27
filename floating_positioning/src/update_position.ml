@@ -50,7 +50,6 @@ end
 module Accessors = struct
   let floating_arrow_top = "--floatingArrowTop"
   let floating_arrow_left = "--floatingArrowLeft"
-  let floating_max_height = "--floatingMaxHeight"
   let floating_max_width = "--floatingAvailableWidth"
   let floating_height = "--floatingHeight"
   let floating_width = "--floatingWidth"
@@ -60,8 +59,6 @@ module Accessors = struct
   let data_floating_arrow_placement = "data-floating-arrow-placement"
 
   (* height/width: fit-content are browser defaults for popovers.
-     `top/left` provide a consistent starting point for floating_ui to work from;
-     these will be overriden by the `top`/`left` style attributes.
 
      https://floating-ui.com/docs/computePosition#usage
 
@@ -76,8 +73,6 @@ module Accessors = struct
         {|
           @layer floating_positioning_new.floating_styling {
             .floating {
-              top: 0;
-              left: 0;
               box-sizing: border-box;
 
               height: %{`Var_with_default (floating_height, `Raw "fit-content")#Css_gen.Length};
@@ -85,10 +80,9 @@ module Accessors = struct
               min-height: %{`Var floating_min_height#Css_gen.Length};
               min-width: %{`Var floating_min_width#Css_gen.Length};
               max-width: %{`Var_with_default (floating_max_width, Css_gen.Length.percent100)#Css_gen.Length};
-              max-height: %{`Var floating_max_height#Css_gen.Length};
             }
           }
-          |}]
+        |}]
     in
     Style.floating
   ;;
@@ -157,6 +151,28 @@ let set_or_remove_style element property = function
 
 let format_px px = Virtual_dom.Dom_float.to_string_fixed 8 px ^ "px"
 
+let position_within_viewport floating strategy =
+  match
+    ( floating##hasAttribute (Js.string Accessors.data_floating_placement) |> Js.to_bool
+    , strategy )
+  with
+  | true, _ -> ()
+  | false, Strategy.Fixed ->
+    set_style floating "top" (format_px 0.);
+    set_style floating "left" (format_px 0.)
+  | false, Absolute ->
+    let window : < scrollY : Js.number Js.t Js.optdef_prop > Js.t =
+      Js.Unsafe.coerce Dom_html.window
+    in
+    let top =
+      match Js.Optdef.to_option window##.scrollY with
+      | None -> 0.
+      | Some scroll_y -> Js.float_of_number scroll_y
+    in
+    set_style floating "top" (format_px top);
+    set_style floating "left" (format_px 0.)
+;;
+
 let single_update
   ~anchor
   ~(floating : Dom_html.element Js.t)
@@ -202,6 +218,10 @@ let single_update
     [ Middleware.Size.create
         { apply =
             (fun { available_height; available_width; rects; placement } ->
+              let available_height =
+                available_height -. Option.value ~default:0. padding
+              in
+              let available_width = available_width -. Option.value ~default:0. padding in
               match match_anchor_side_length with
               | None ->
                 List.iter
@@ -212,10 +232,7 @@ let single_update
                     ; floating_width
                     ]
                   ~f:(remove_style floating);
-                set_style
-                  floating
-                  Accessors.floating_max_height
-                  (format_px available_height);
+                set_style floating "max-height" (format_px available_height);
                 set_style
                   floating
                   Accessors.floating_max_width
@@ -244,7 +261,7 @@ let single_update
                   floating
                   Accessors.floating_height
                   (Option.map height ~f:format_px);
-                set_style floating Accessors.floating_max_height (format_px max_height);
+                set_style floating "max-height" (format_px max_height);
                 let min_width, width, max_width =
                   match min_or_exact with
                   | Match_anchor_side.Match_exactly -> None, anchor_width, available_width
@@ -292,4 +309,16 @@ let single_update
            (Js.string Accessors.data_floating_arrow_placement)
            (Js.string (Side.to_string (Side.flip side)))
        | _ -> ())
+;;
+
+let clear_floating_properties element =
+  element##removeAttribute (Js.string Accessors.data_floating_placement);
+  remove_style element "top";
+  remove_style element "left";
+  remove_style element "max-height";
+  remove_style element Accessors.floating_min_height;
+  remove_style element Accessors.floating_height;
+  remove_style element Accessors.floating_min_width;
+  remove_style element Accessors.floating_width;
+  remove_style element Accessors.floating_max_width
 ;;

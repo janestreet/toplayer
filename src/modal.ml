@@ -1,26 +1,6 @@
 open! Core
 open Virtual_dom
 
-module Show_on_mount = Vdom.Attr.Hooks.Make (struct
-    module State = Unit
-
-    module Input = struct
-      type t = unit [@@deriving sexp, equal]
-
-      let combine () () = ()
-    end
-
-    let init () _ = ()
-    let on_mount () _ elem = Popover_dom.show_popover elem
-    let on_mount = `Schedule_animation_frame on_mount
-    let update ~old_input:_ ~new_input:_ _ _elem = ()
-    let destroy () () _ = ()
-  end)
-
-let show_on_mount =
-  Show_on_mount.create () |> Vdom.Attr.create_hook "vdom_toplayer_show_on_mount"
-;;
-
 let lock_body_scroll_testing_attr_name = "data-lock-body-scroll-for-testing"
 
 let lock_body_scroll_attr =
@@ -63,11 +43,19 @@ let testing_modal_attr =
   | false -> Vdom.Attr.empty
 ;;
 
-let node ?(modal_attrs = []) ?(lock_body_scroll = false) contents =
+let node
+  ?(modal_attrs = [])
+  ?(lock_body_scroll = false)
+  ?(restore_focus_on_close = true)
+  ~overflow_auto_wrapper
+  contents
+  =
   let scroll_attr = if lock_body_scroll then lock_body_scroll_attr else Vdom.Attr.empty in
   Popover_dom.node
+    ~restore_focus_on_close
+    ~overflow_auto_wrapper
     ~extra_attrs:
-      (show_on_mount
+      (Popover_dom.show_on_mount
        :: Inertness_management.for_modal
        :: scroll_attr
        :: restrict_height_to_viewport

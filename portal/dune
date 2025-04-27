@@ -1,0 +1,6 @@
+(library
+ (name byo_portal_private)
+ (public_name virtual_dom_toplayer.portal)
+ (preprocess
+  (pps js_of_ocaml-ppx ppx_jane))
+ (libraries am_running_how_js core js_of_ocaml virtual_dom))

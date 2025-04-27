@@ -8,19 +8,19 @@ val attr
   -> ?alignment:Alignment.t
   -> ?offset:Offset.t
   -> ?match_anchor_side_length:Match_anchor_side.t
+  -> ?restore_focus_on_close:bool
+  -> overflow_auto_wrapper:bool
   -> ?arrow:Vdom.Node.t
   -> Vdom.Node.t
   -> Vdom.Attr.t
 
-val node
+val custom
   :  ?popover_attrs:Vdom.Attr.t list
-  -> ?position:Position.t
-  -> ?alignment:Alignment.t
-  -> ?offset:Offset.t
-  -> ?match_anchor_side_length:Match_anchor_side.t
+  -> ?restore_focus_on_close:bool
+  -> overflow_auto_wrapper:bool
   -> ?arrow:Vdom.Node.t
   -> popover_content:Vdom.Node.t
-  -> Anchor.t
+  -> unit
   -> Vdom.Node.t
 
 module For_testing_popover_hook : sig
@@ -28,6 +28,8 @@ module For_testing_popover_hook : sig
     { content : Vdom.Node.t
     ; popover_attrs : Vdom.Attr.t list
     ; arrow : Vdom.Node.t option
+    ; restore_focus_on_close : bool
+    ; overflow_auto_wrapper : bool
     ; position : Position.t
     ; alignment : Alignment.t
     ; offset : Offset.t
@@ -47,6 +49,8 @@ module For_testing_bonsai_web_ui_toplayer : sig
     -> alignment:Alignment.t
     -> offset:Offset.t
     -> match_anchor_side_length:Match_anchor_side.t option
+    -> restore_focus_on_close:bool
+    -> overflow_auto_wrapper:bool
     -> content:Vdom.Node.t
     -> popover_attrs:Vdom.Attr.t list
     -> arrow:Vdom.Node.t option

@@ -1,6 +1,7 @@
 open! Core
 open Virtual_dom
 open Floating_positioning_new
+module Portal = Byo_portal_private
 
 module Popover_attr = struct
   module Impl = struct
@@ -10,19 +11,22 @@ module Popover_attr = struct
           { content : Vdom_with_phys_equal.Node.t
           ; popover_attrs : Vdom_with_phys_equal.Attr.t list
           ; arrow : Vdom_with_phys_equal.Node.t option
+          ; restore_focus_on_close : bool
+          ; overflow_auto_wrapper : bool
           ; position : Position.t
           ; alignment : Alignment.t
           ; offset : Offset.t
           ; match_anchor_side_length : Match_anchor_side.t option
           }
-        [@@deriving sexp_of, equal]
+        [@@deriving equal]
 
         let equal a b = phys_equal a b || equal a b
       end
 
-      type t = For_one.t list [@@deriving sexp_of, equal]
+      type t = For_one.t list [@@deriving equal]
 
       let combine a b = a @ b
+      let sexp_of_t _ = Sexp.Atom "<omitted>"
     end
 
     module State = struct
@@ -42,6 +46,8 @@ module Popover_attr = struct
       ; offset
       ; match_anchor_side_length
       ; content
+      ; restore_focus_on_close
+      ; overflow_auto_wrapper
       ; popover_attrs
       ; arrow
       }
@@ -59,14 +65,16 @@ module Popover_attr = struct
       in
       Popover_dom.node
         ?arrow
+        ~restore_focus_on_close
+        ~overflow_auto_wrapper
         ~extra_attrs:(popover_attrs @ [ Inertness_management.for_popover; position_attr ])
         ~kind:`Manual
         content
     ;;
 
     let create_one (input : Input.For_one.t) ~anchor =
-      let portal_root = Portal.For_popovers.find_popover_portal_root anchor in
-      let portal = Portal.create portal_root (wrap_content input ~anchor) in
+      let parent = Popover_dom.find_popover_portal_root anchor in
+      let portal = Portal.create ~parent (wrap_content input ~anchor) in
       { State.For_one.portal; input }
     ;;
 
@@ -86,7 +94,7 @@ module Popover_attr = struct
       state_ref := state
     ;;
 
-    let on_mount = `Schedule_animation_frame on_mount
+    let on_mount = `Schedule_immediately_after_this_dom_patch_completes on_mount
 
     let update ~old_input ~(new_input : Input.t) (state_ref : State.t) anchor =
       match phys_equal old_input new_input with
@@ -122,6 +130,8 @@ let attr
   ?(alignment = Alignment.Center)
   ?(offset = Offset.zero)
   ?match_anchor_side_length
+  ?(restore_focus_on_close = true)
+  ~overflow_auto_wrapper
   ?arrow
   content
   =
@@ -129,40 +139,31 @@ let attr
     [ { position
       ; alignment
       ; offset
+      ; restore_focus_on_close
       ; match_anchor_side_length
       ; content
       ; popover_attrs
+      ; overflow_auto_wrapper
       ; arrow
       }
     ]
   |> Vdom.Attr.create_hook hook_name
 ;;
 
-let node
+let custom
   ?(popover_attrs = [])
-  ?(position = Position.Auto)
-  ?(alignment = Alignment.Center)
-  ?(offset = Offset.zero)
-  ?match_anchor_side_length
+  ?(restore_focus_on_close = true)
+  ~overflow_auto_wrapper
   ?arrow
   ~popover_content
-  anchor
+  ()
   =
   Popover_dom.node
     ?arrow
     ~kind:`Manual
-    ~extra_attrs:
-      (popover_attrs
-       @ [ Inertness_management.for_popover
-         ; Floating_positioning_new.position_me
-             ~prepare:Popover_dom.show_popover
-             ~arrow_selector:Popover_dom.arrow_selector
-             ~position
-             ~alignment
-             ~offset
-             ?match_anchor_side_length
-             anchor
-         ])
+    ~restore_focus_on_close
+    ~overflow_auto_wrapper
+    ~extra_attrs:(popover_attrs @ [ Inertness_management.for_popover ])
     popover_content
 ;;
 
@@ -171,6 +172,8 @@ module For_testing_popover_hook = struct
     { content : Vdom_with_phys_equal.Node.t
     ; popover_attrs : Vdom_with_phys_equal.Attr.t list
     ; arrow : Vdom_with_phys_equal.Node.t option
+    ; restore_focus_on_close : bool
+    ; overflow_auto_wrapper : bool
     ; position : Position.t
     ; alignment : Alignment.t
     ; offset : Offset.t
@@ -190,6 +193,8 @@ module For_testing_bonsai_web_ui_toplayer = struct
     ~alignment
     ~offset
     ~match_anchor_side_length
+    ~restore_focus_on_close
+    ~overflow_auto_wrapper
     ~content
     ~popover_attrs
     ~arrow
@@ -200,6 +205,8 @@ module For_testing_bonsai_web_ui_toplayer = struct
       ; alignment
       ; offset
       ; match_anchor_side_length
+      ; restore_focus_on_close
+      ; overflow_auto_wrapper
       ; content
       ; popover_attrs
       ; arrow
