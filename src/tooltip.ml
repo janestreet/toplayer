@@ -2,6 +2,7 @@ open! Core
 open Js_of_ocaml
 open Virtual_dom
 module Effect = Vdom.Effect
+module Portal = Byo_portal_private
 
 let add_event_listener = Element_listener.add_event_listener
 
@@ -16,17 +17,16 @@ let hide_on_mouseleave ~hoverable_inside ~anchor ~popover ~grace_period =
     match grace_period with
     | None -> Effect.of_sync_fun Popover_dom.hide_popover popover
     | Some grace_period ->
-      let time_ms = Time_ns.Span.to_ms grace_period in
       let timeout_handle =
-        Dom_html.setTimeout
-          (fun () -> if not (hovering ()) then Popover_dom.hide_popover popover)
-          time_ms
+        Testable_timeout.set_timeout
+          ~f:(fun () -> if not (hovering ()) then Popover_dom.hide_popover popover)
+          grace_period
       in
       timeout := Some timeout_handle;
       Effect.Ignore
   in
   let on_enter _ =
-    Option.iter !timeout ~f:Dom_html.clearTimeout;
+    Option.iter !timeout ~f:Testable_timeout.cancel;
     timeout := None;
     Effect.Ignore
   in
@@ -52,17 +52,16 @@ let show_on_mouseenter ~anchor ~delay ~open_popover =
     match delay with
     | None -> Effect.of_thunk open_popover
     | Some delay ->
-      let time_ms = Time_ns.Span.to_ms delay in
       let timeout_handle =
-        Dom_html.setTimeout
-          (fun () -> if Popover_dom.is_hovered anchor then open_popover ())
-          time_ms
+        Testable_timeout.set_timeout
+          ~f:(fun () -> if Popover_dom.is_hovered anchor then open_popover ())
+          delay
       in
       timeout := Some timeout_handle;
       Effect.Ignore
   in
   let on_leave _ =
-    Option.iter !timeout ~f:Dom_html.clearTimeout;
+    Option.iter !timeout ~f:Testable_timeout.cancel;
     timeout := None;
     Effect.Ignore
   in
@@ -84,15 +83,19 @@ module Tooltip_attr = struct
         ; alignment : Alignment.t
         ; offset : Offset.t
         ; hoverable_inside : bool
+        ; light_dismiss : bool
         ; show_delay : Time_ns.Span.t option
         ; hide_grace_period : Time_ns.Span.t option
         }
-      [@@deriving sexp_of, equal]
+      [@@deriving equal]
 
       let combine _ b =
-        Firebug.console##warn "Multiple tooltips cannot be attached on the same element";
+        Console.console##warn
+          (Js.string "Multiple tooltips cannot be attached on the same element");
         b
       ;;
+
+      let sexp_of_t _ = Sexp.Atom "<omitted>"
     end
 
     module State = struct
@@ -131,22 +134,13 @@ module Tooltip_attr = struct
       ; arrow
       ; hide_grace_period
       ; hoverable_inside
+      ; light_dismiss
       ; show_delay = _
       }
       =
       let position_attr =
-        let before_position tooltip =
-          (* This runs after the popover has been placed in the DOM, so we need this to
-             avoid a race condition where the user mouses over the anchor,
-             and [showPopover] ends up being called after the mouse leaves,
-             and therefore the "close on mouseleave" listener never runs,
-             and the popover stays open. *)
-          if Popover_dom.is_hovered anchor
-          then Popover_dom.show_popover tooltip
-          else Effect.Expert.handle_non_dom_event_exn close_popover
-        in
         position_me
-          ~prepare:before_position
+          ~prepare:Popover_dom.show_popover
           ~arrow_selector:Popover_dom.arrow_selector
           ~position
           ~alignment
@@ -155,7 +149,11 @@ module Tooltip_attr = struct
       in
       Popover_dom.node
         ?arrow
-        ~kind:`Auto
+        ~kind:(if light_dismiss then `Auto else `Manual)
+          (* Tooltips should never get focus. But if they somehow do, might as well restore
+             it on close. *)
+        ~restore_focus_on_close:true
+        ~overflow_auto_wrapper:false
         ~extra_attrs:
           (tooltip_attrs
            @ [ position_attr
@@ -181,9 +179,14 @@ module Tooltip_attr = struct
         | Some _ -> state
         | None ->
           let portal =
-            Portal.create
-              (Portal.For_popovers.find_popover_portal_root anchor)
-              (wrap_content ~anchor ~close_popover:(close_popover state_ref) state.input)
+            (* The portalling root should always be connected to the document. *)
+            Vdom.Node.For_changing_dom.with_on_mount_at_end (fun () ->
+              Portal.create
+                ~parent:(Popover_dom.find_popover_portal_root anchor)
+                (wrap_content
+                   ~anchor
+                   ~close_popover:(close_popover state_ref)
+                   state.input))
           in
           { state with portal = Some portal })
     ;;
@@ -201,7 +204,7 @@ module Tooltip_attr = struct
       state_ref := Some state
     ;;
 
-    let on_mount = `Schedule_animation_frame on_mount
+    let on_mount = `Schedule_immediately_after_this_dom_patch_completes on_mount
 
     let update ~old_input ~new_input (state_ref : State.t) anchor =
       match Input.equal old_input new_input with
@@ -211,13 +214,15 @@ module Tooltip_attr = struct
           let new_portal =
             match state with
             | { portal = None; _ } -> None
-            | { portal = Some portal; _ } as state ->
-              Portal.apply_patch
-                portal
-                (wrap_content
-                   ~anchor
-                   ~close_popover:(close_popover state_ref)
-                   state.input)
+            | { portal = Some portal; _ } ->
+              (* We are applying a patch to an already-connected portal. *)
+              Vdom.Node.For_changing_dom.with_on_mount_at_end (fun () ->
+                Portal.apply_patch
+                  portal
+                  (wrap_content
+                     ~anchor
+                     ~close_popover:(close_popover state_ref)
+                     new_input))
               |> Some
           in
           let open_on_hover_listeners =
@@ -248,6 +253,8 @@ module Tooltip_attr = struct
   include Vdom.Attr.Hooks.Make (Impl)
 end
 
+let hook_name = "vdom_tooltip"
+
 let attr
   ?(tooltip_attrs = [])
   ?(position = Position.Auto)
@@ -256,6 +263,7 @@ let attr
   ?show_delay
   ?hide_grace_period
   ?(hoverable_inside = false)
+  ?(light_dismiss = true)
   ?arrow
   content
   =
@@ -267,8 +275,28 @@ let attr
     ; content
     ; arrow
     ; hoverable_inside
+    ; light_dismiss
     ; show_delay
     ; hide_grace_period
     }
-  |> Vdom.Attr.create_hook "vdom_tooltip"
+  |> Vdom.Attr.create_hook hook_name
 ;;
+
+module For_testing_tooltip_hook = struct
+  type t = Tooltip_attr.Input.t =
+    { content : Vdom_with_phys_equal.Node.t
+    ; tooltip_attrs : Vdom_with_phys_equal.Attr.t list
+    ; arrow : Vdom_with_phys_equal.Node.t option
+    ; position : Position.t
+    ; alignment : Alignment.t
+    ; offset : Offset.t
+    ; hoverable_inside : bool
+    ; light_dismiss : bool [@sexp_drop_if fun _ -> true]
+    ; show_delay : Time_ns.Span.t option
+    ; hide_grace_period : Time_ns.Span.t option
+    }
+  [@@deriving sexp_of]
+
+  let type_id = Tooltip_attr.For_testing.type_id
+  let hook_name = hook_name
+end

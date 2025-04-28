@@ -36,10 +36,15 @@ end
 let open_modals = Hashtbl.create (module Modal_key)
 let subscribers = Hashtbl.create (module Subscriber_key)
 
-(* It's important that we use the same implementation of time_now for popovers and modals,
-   so we can compare [opened_at] timestamps.
-   That's why we pull out a variable instead of using [Time_ns.now] directly. *)
-let time_now = Time_ns.now
+module Sequenced_id = struct
+  let global_counter = ref Int63.zero
+
+  let get_next () =
+    let r = !global_counter in
+    Int63.incr global_counter;
+    r
+  ;;
+end
 
 let subscribe f =
   let key = Subscriber_key.create () in
@@ -53,23 +58,21 @@ let on_state_change () =
   let modal_opened_most_recently_at =
     Hashtbl.fold open_modals ~init:None ~f:(fun ~key:_ ~data:timestamp -> function
       | None -> Some timestamp
-      | Some acc_timestamp -> Time_ns.max timestamp acc_timestamp |> Some)
+      | Some acc_timestamp -> Int63.max timestamp acc_timestamp |> Some)
   in
   let update_app_root_inertness =
     match modal_opened_most_recently_at with
     | None -> remove_inert
     | Some _ -> set_inert
   in
-  Dom_html.document##querySelectorAll
-    (Js.string ("." ^ Incr_dom.Start_app.For_mutating_inertness.app_root_class))
-  |> Dom.list_of_nodeList
+  Incr_dom.Start_app.Private_for_toplayer_to_mutate_inertness.connected_app_roots ()
   |> List.iter ~f:update_app_root_inertness;
   Hashtbl.iter subscribers ~f:(fun f -> f ~modal_opened_most_recently_at)
 ;;
 
 let open_modal () =
   let key = Modal_key.create () in
-  let opened_at = time_now () in
+  let opened_at = Sequenced_id.get_next () in
   Hashtbl.add_exn open_modals ~key ~data:opened_at;
   on_state_change ();
   key, opened_at
@@ -80,11 +83,17 @@ let close_modal key =
   on_state_change ()
 ;;
 
+let reset () =
+  Hashtbl.clear open_modals;
+  Hashtbl.clear subscribers;
+  on_state_change ()
+;;
+
 let inertness_subscription ~element ~opened_at ~modal_opened_most_recently_at =
   match modal_opened_most_recently_at with
   | None -> remove_inert element
   | Some modal_opened_most_recently_at ->
-    if Time_ns.(opened_at < modal_opened_most_recently_at)
+    if Int63.(opened_at < modal_opened_most_recently_at)
     then set_inert element
     else remove_inert element
 ;;
@@ -132,7 +141,7 @@ module For_popover = Vdom.Attr.Hooks.Make (struct
     end
 
     let init () element =
-      subscribe (inertness_subscription ~element ~opened_at:(time_now ()))
+      subscribe (inertness_subscription ~element ~opened_at:(Sequenced_id.get_next ()))
     ;;
 
     let on_mount = `Do_nothing

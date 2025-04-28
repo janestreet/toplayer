@@ -2,11 +2,10 @@ open! Core
 open! Js_of_ocaml
 
 (** The Floating_positioning library is for positioning an element relative to a reference
-    element. It is intended for component authors, and generally should not be used directly
-    in implementations of web UIs.
+    element. It is intended for component authors, and generally should not be used
+    directly in implementations of web UIs.
 
-    These are used to implement positioning for `lib/vdom_toplayer`.
-*)
+    These are used to implement positioning for `lib/vdom_toplayer`. *)
 
 (** {2 Config Types} *)
 
@@ -41,18 +40,9 @@ module Offset : sig
   val zero : t
 end
 
-module Strategy : sig
-  (** Use `Absolute` for floating elements with `position:absolute`, and `Fixed` for those
-      with `position:fixed`, or that are in the browser top-layer. *)
-  type t =
-    | Absolute
-    | Fixed
-  [@@deriving sexp, sexp_grammar, equal, compare, enumerate]
-end
-
 module Match_anchor_side : sig
-  (** [Grow_to_match] will set [min-width] or [min-height]; [Match_exactly] will set [width] or [height],
-      and [Shrink_to_match] will set [max-width] or [max-height].
+  (** [Grow_to_match] will set [min-width] or [min-height]; [Match_exactly] will set
+      [width] or [height], and [Shrink_to_match] will set [max-width] or [max-height].
 
       If not set here, max height and width will be set to the available space. *)
   type t =
@@ -70,58 +60,40 @@ module Anchor : sig
   (** An element in the dom relative to which the floating element will be positioned. *)
   val of_element : Dom_html.element Js.t -> t
 
-  (** [top], [bottom], and [left], [right] are the # of pixels down and right from the
-      top left corner to form the (top, bottom), and (left, right) borders of the
-      virtual bounding box. *)
-  val of_bounding_box : top:float -> left:float -> bottom:float -> right:float -> t
+  (** [top], [bottom], and [left], [right] are the # of pixels down and right from the top
+      left corner to form the (top, bottom), and (left, right) borders of the virtual
+      bounding box.
 
-  (** [x] and [y] are the # of pixels right/down from the top left corner. *)
-  val of_coordinate : x:float -> y:float -> t
+      [relative_to] defaults to [`Viewport], and determines whether the coordinates you
+      provide should be in terms of "Client" or "Page" coordinate systems:
+      https://developer.mozilla.org/en-US/docs/Web/CSS/CSSOM_view/Coordinate_systems *)
+  val of_bounding_box
+    :  relative_to:[ `Viewport | `Document ]
+    -> top:float
+    -> left:float
+    -> bottom:float
+    -> right:float
+    -> t
+
+  (** [x] and [y] are the # of pixels right/down from the top left corner.
+
+      [relative_to] defaults to [`Viewport], and determines whether the coordinates you
+      provide should be in terms of "Client" or "Page" coordinate systems:
+      https://developer.mozilla.org/en-US/docs/Web/CSS/CSSOM_view/Coordinate_systems *)
+  val of_coordinate : relative_to:[ `Viewport | `Document ] -> x:float -> y:float -> t
 end
 
-(** {2 Positioning Primitives} *)
-type auto_update_handle
+(** Absolutely positioned popovers start at the top left corner of the viewport before
+    autopositioning kicks in. If the popover is focused via [autofocus] or
+    [Effect.Focus.on_activate], and the popover has [position:absolute], and
+    autopositioning has not yet completed, this focusing will scroll the page to the top.
 
-(** Sets the position of the floating element relative to the anchor.
-    Can be useful for one-off positioning calls or virtual positioning.
-    For real DOM anchors, you'll generally want to use [auto_update_position].
+    Because floating UI positioning is asynchronous, we always need to pre-position the
+    popovers into the viewport before opening it.
 
-    [arrow_selector] can be used to indicate a child element of [floating] that should be a
-    positioning indicator: https://floating-ui.com/docs/arrow. *)
-val update_position
-  :  ?arrow_selector:string
-  -> anchor:Anchor.t
-  -> floating:Dom_html.element Js.t
-  -> match_anchor_side_length:Match_anchor_side.t option
-  -> Position.t
-  -> Alignment.t
-  -> Offset.t
-  -> Strategy.t
-  -> unit
-
-(** Like [update_position], but automatically repositions the floating element
-    when the anchor changes.
-
-    This can be expensive, don't use it to position elements with [display:none]
-    while they are not visible.
-
-    Known bug: popovers attached to moving elements might disconnect when positioning
-    params change due to some weird interactions between vdom diffing and [floating_ui]'s
-    use of [IntersectionObserver]. This could be fixed by running auto-update on every
-    frame, but isn't currently implemented because it's not a likely use case.
-*)
-val auto_update_position
-  :  ?arrow_selector:string
-  -> anchor:Anchor.t
-  -> floating:Dom_html.element Js.t
-  -> match_anchor_side_length:Match_anchor_side.t option
-  -> Position.t
-  -> Alignment.t
-  -> Offset.t
-  -> Strategy.t
-  -> auto_update_handle
-
-val cancel_auto_update : auto_update_handle -> unit
+    [position_within_viewport] should be called on any toplayer element that can be
+    focused and is positioned via floating positioning, before it is opened. *)
+val position_within_viewport : Dom_html.element Js.t -> Anchor.t -> unit
 
 (** {2 Control and positioning hooks} *)
 
@@ -132,10 +104,10 @@ val cancel_auto_update : auto_update_handle -> unit
     mounted. The most common use case is opening a popover before starting autopositioning
     to avoid a flicker.
 
-    If [match_anchor_side_length] is set to true, the popover's main axis
-    (width if position is Top/Bottom, height if position is Left/Right) will be set to
-    have a length equal to the corresponding axis of the anchor. This is particularly
-    useful for dropdowns and typeaheads. *)
+    If [match_anchor_side_length] is set to true, the popover's main axis (width if
+    position is Top/Bottom, height if position is Left/Right) will be set to have a length
+    equal to the corresponding axis of the anchor. This is particularly useful for
+    dropdowns and typeaheads. *)
 val position_me
   :  ?prepare:(Dom_html.element Js.t -> unit)
   -> ?arrow_selector:string
@@ -149,12 +121,12 @@ val position_me
 (** {2 Accessors for styles and data provided by floating_positioning} *)
 
 module Accessors : sig
-  (** These set up some "config" styles that help floating ui run more smoothly,
-      and constrain the floating element to the max available width/height. *)
+  (** These set up some "config" styles that help floating ui run more smoothly, and
+      constrain the floating element to the max available width/height. *)
   val floating_styling : Virtual_dom.Vdom.Attr.t
 
-  (** If using an arrow, it should be placed in an element that has this attribute.
-      It will position and z-index the contents. *)
+  (** If using an arrow, it should be placed in an element that has this attribute. It
+      will position and z-index the contents. *)
   val arrow_container : Virtual_dom.Vdom.Attr.t
 end
 
@@ -164,7 +136,6 @@ module For_testing_position_me_hook : sig
     ; position : Position.t
     ; alignment : Alignment.t
     ; offset : Offset.t
-    ; strategy : Strategy.t
     ; match_anchor_side_length : Match_anchor_side.t option
     ; arrow_selector : string option
     ; anchor : Anchor.t

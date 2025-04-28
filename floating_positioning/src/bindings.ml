@@ -218,7 +218,7 @@ module Middleware = struct
         fun (x23 : Ojs.t) ->
         { apply =
             (fun (x24 : Apply_options.t) ->
-              ignore
+              (ignore : _)
                 (Ojs.apply
                    (Ojs.get_prop_ascii x23 "apply")
                    [| Apply_options.t_to_js x24 |]))
@@ -572,7 +572,7 @@ module Compute_position = struct
 
   let then_ : t -> (Then_args.t -> unit) -> unit =
     fun (x90 : t) (x88 : Then_args.t -> unit) ->
-    ignore
+    (ignore : _)
       (Ojs.call
          (t_to_js x90)
          "then"
@@ -619,5 +619,5 @@ module Auto_update_handle = struct
          |])
   ;;
 
-  let cleanup : t -> unit = fun (x101 : t) -> ignore (Ojs.apply (t_to_js x101) [||])
+  let cleanup : t -> unit = fun (x101 : t) -> (ignore : _) (Ojs.apply (t_to_js x101) [||])
 end
