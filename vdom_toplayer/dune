@@ -1,0 +1,9 @@
+(library
+ (name byo_toplayer_private_vdom)
+ (public_name toplayer.popover)
+ (preprocess
+  (pps js_of_ocaml-ppx ppx_jane ppx_css))
+ (libraries byo_portal_private virtual_dom am_running_how_js
+   byo_toplayer_private_floating incr_dom.javascript_profiling
+   virtual_dom.css_gen core incr_dom js_of_ocaml sexplib testable_timeout
+   time_now virtual_dom.ui_effect))

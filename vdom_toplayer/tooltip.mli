@@ -1,6 +1,6 @@
 open! Core
 open Virtual_dom
-open Floating_positioning_new
+open Byo_toplayer_private_floating
 
 val attr
   :  ?tooltip_attrs:Vdom.Attr.t list

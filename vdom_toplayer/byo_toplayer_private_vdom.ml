@@ -1,9 +1,13 @@
 open! Core
+module Position = Byo_toplayer_private_floating.Position
+module Alignment = Byo_toplayer_private_floating.Alignment
+module Offset = Byo_toplayer_private_floating.Offset
+module Match_anchor_side = Byo_toplayer_private_floating.Match_anchor_side
 
 let tooltip = Tooltip.attr
 let popover = Popover.attr
 
-module For_bonsai_web_ui_toplayer = struct
+module For_byo_toplayer = struct
   let show_popover = Popover_dom.show_popover
   let focus_popover_on_open = Popover_dom.focus_popover_on_open
   let show_on_mount = Popover_dom.show_on_mount
@@ -20,9 +24,9 @@ end
 module For_testing_popover_hook = Popover.For_testing_popover_hook
 module For_testing_tooltip_hook = Tooltip.For_testing_tooltip_hook
 
-module For_testing_bonsai_web_ui_toplayer = struct
-  include Popover.For_testing_bonsai_web_ui_toplayer
-  include Modal.For_testing_bonsai_web_ui_toplayer
+module For_testing_byo_toplayer = struct
+  include Popover.For_testing_byo_toplayer
+  include Modal.For_testing_byo_toplayer
 end
 
 module For_jsdom_tests = struct

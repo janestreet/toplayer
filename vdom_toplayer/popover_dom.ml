@@ -226,7 +226,7 @@ let attrs kind =
          | `Manual -> "manual")
     ; unset_browser_styling
     ; tabindex_attr
-    ; Floating_positioning_new.Accessors.floating_styling
+    ; Byo_toplayer_private_floating.Accessors.floating_styling
     ]
 ;;
 
@@ -236,7 +236,7 @@ let wrap_arrow node =
   Vdom.Node.div
     ~attrs:
       [ Vdom.Attr.create arrow_data ""
-      ; Floating_positioning_new.Accessors.arrow_container
+      ; Byo_toplayer_private_floating.Accessors.arrow_container
       ]
     [ node ]
 ;;

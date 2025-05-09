@@ -1,11 +1,7 @@
 open! Core
 open! Js_of_ocaml
 
-(** The Floating_positioning library is for positioning an element relative to a reference
-    element. It is intended for component authors, and generally should not be used
-    directly in implementations of web UIs.
-
-    These are used to implement positioning for `lib/vdom_toplayer`. *)
+(** Do not use this library directly! Use [Byo_toplayer] instead. *)
 
 (** {2 Config Types} *)
 

@@ -70,7 +70,7 @@ let show_on_mouseenter ~anchor ~delay ~open_popover =
   ]
 ;;
 
-open Floating_positioning_new
+open Byo_toplayer_private_floating
 
 module Tooltip_attr = struct
   module Impl = struct
