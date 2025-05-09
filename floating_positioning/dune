@@ -1,6 +1,6 @@
 (library
- (name floating_positioning_new)
- (public_name virtual_dom_toplayer.floating_positioning)
+ (name byo_toplayer_private_floating)
+ (public_name toplayer.floating_positioning)
  (preprocess
   (pps js_of_ocaml-ppx ppx_css gen_js_api.ppx ppx_jane))
  (js_of_ocaml

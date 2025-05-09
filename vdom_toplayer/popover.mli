@@ -1,6 +1,6 @@
 open! Core
 open Virtual_dom
-open Floating_positioning_new
+open Byo_toplayer_private_floating
 
 val attr
   :  ?popover_attrs:Vdom.Attr.t list
@@ -9,7 +9,7 @@ val attr
   -> ?offset:Offset.t
   -> ?match_anchor_side_length:Match_anchor_side.t
   -> ?restore_focus_on_close:bool
-  -> overflow_auto_wrapper:bool
+  -> ?overflow_auto_wrapper:bool
   -> ?arrow:Vdom.Node.t
   -> Vdom.Node.t
   -> Vdom.Attr.t
@@ -17,7 +17,7 @@ val attr
 val custom
   :  ?popover_attrs:Vdom.Attr.t list
   -> ?restore_focus_on_close:bool
-  -> overflow_auto_wrapper:bool
+  -> ?overflow_auto_wrapper:bool
   -> ?arrow:Vdom.Node.t
   -> popover_content:Vdom.Node.t
   -> unit
@@ -43,7 +43,7 @@ module For_testing_popover_hook : sig
   val hook_name : string
 end
 
-module For_testing_bonsai_web_ui_toplayer : sig
+module For_testing_byo_toplayer : sig
   val wrap_anchored_popover
     :  position:Position.t
     -> alignment:Alignment.t

@@ -71,7 +71,7 @@ module Accessors = struct
       [%css
       stylesheet
         {|
-          @layer floating_positioning_new.floating_styling {
+          @layer byo_toplayer_private_floating.floating_styling {
             .floating {
               box-sizing: border-box;
 

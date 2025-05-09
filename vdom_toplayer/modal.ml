@@ -47,7 +47,7 @@ let node
   ?(modal_attrs = [])
   ?(lock_body_scroll = false)
   ?(restore_focus_on_close = true)
-  ~overflow_auto_wrapper
+  ?(overflow_auto_wrapper = false)
   contents
   =
   let scroll_attr = if lock_body_scroll then lock_body_scroll_attr else Vdom.Attr.empty in
@@ -65,7 +65,7 @@ let node
     contents
 ;;
 
-module For_testing_bonsai_web_ui_toplayer = struct
+module For_testing_byo_toplayer = struct
   let modal_attr_name = testing_modal_attr_name
   let lock_body_scroll_attr_name = lock_body_scroll_testing_attr_name
 end

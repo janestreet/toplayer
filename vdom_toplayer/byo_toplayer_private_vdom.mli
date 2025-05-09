@@ -1,18 +1,14 @@
 open! Core
 open Virtual_dom
-module Position := Floating_positioning_new.Position
-module Alignment := Floating_positioning_new.Alignment
-module Offset := Floating_positioning_new.Offset
-module Match_anchor_side := Floating_positioning_new.Match_anchor_side
+module Position = Byo_toplayer_private_floating.Position
+module Alignment = Byo_toplayer_private_floating.Alignment
+module Offset = Byo_toplayer_private_floating.Offset
+module Match_anchor_side = Byo_toplayer_private_floating.Match_anchor_side
+
+(** Do not use this library directly! Use [Byo_toplayer] instead. *)
 
 (** This library contains vdom utils for creating and positioning popovers, tooltips, and
     modals.
-
-    It is intended for authors of UI component libraries. You'll probably want to set some
-    custom atts for borders/padding/style, possibly provide an `arrow` element, and offer
-    a slightly simpler API for users of your UI component library.
-
-    [popover] is intended to be used through the [bonsai_web_ui_toplayer] library.
 
     Note that the DOM for all popovers will be placed outside of the app root. If you want
     global event listeners (including keyboard shortcuts) to work inside popovers, they
@@ -58,12 +54,12 @@ val popover
   -> ?offset:Offset.t
   -> ?match_anchor_side_length:Match_anchor_side.t
   -> ?restore_focus_on_close:bool
-  -> overflow_auto_wrapper:bool
+  -> ?overflow_auto_wrapper:bool
   -> ?arrow:Vdom.Node.t
   -> Vdom.Node.t
   -> Vdom.Attr.t
 
-module For_bonsai_web_ui_toplayer : sig
+module For_byo_toplayer : sig
   (** The implementations of [popover_custom] and [modal] assume that their DOM is placed
       outside of the app root. If placed inside the app root, [modal] **will always** be
       inert, and [popover_custom] will be inert when any modal is open, even it is on top.
@@ -75,7 +71,7 @@ module For_bonsai_web_ui_toplayer : sig
   val popover_custom
     :  ?popover_attrs:Vdom.Attr.t list
     -> ?restore_focus_on_close:bool
-    -> overflow_auto_wrapper:bool
+    -> ?overflow_auto_wrapper:bool
     -> ?arrow:Vdom.Node.t
     -> popover_content:Vdom.Node.t
     -> unit
@@ -89,7 +85,7 @@ module For_bonsai_web_ui_toplayer : sig
     :  ?modal_attrs:Vdom.Attr.t list
     -> ?lock_body_scroll:bool
     -> ?restore_focus_on_close:bool
-    -> overflow_auto_wrapper:bool
+    -> ?overflow_auto_wrapper:bool
     -> Vdom.Node.t
     -> Vdom.Node.t
 
@@ -118,9 +114,9 @@ module For_testing_tooltip_hook : sig
   include module type of Tooltip.For_testing_tooltip_hook
 end
 
-module For_testing_bonsai_web_ui_toplayer : sig
-  include module type of Popover.For_testing_bonsai_web_ui_toplayer
-  include module type of Modal.For_testing_bonsai_web_ui_toplayer
+module For_testing_byo_toplayer : sig
+  include module type of Popover.For_testing_byo_toplayer
+  include module type of Modal.For_testing_byo_toplayer
 end
 
 module For_jsdom_tests : sig
