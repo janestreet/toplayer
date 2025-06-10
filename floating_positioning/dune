@@ -5,7 +5,6 @@
   (pps js_of_ocaml-ppx ppx_css gen_js_api.ppx ppx_jane))
  (js_of_ocaml
   (javascript_files for_ocaml_bindings.js))
- (libraries core js_of_ocaml js_of_ocaml_patches virtual_dom
-   virtual_dom.css_gen gen_js_api)
+ (libraries core js_of_ocaml virtual_dom virtual_dom.css_gen gen_js_api)
  (wasm_of_ocaml
   (javascript_files for_ocaml_bindings.js)))
