@@ -241,11 +241,10 @@ module Tooltip_attr = struct
     ;;
 
     let destroy _ (state_ref : State.t) _ =
-      match !state_ref with
-      | None -> ()
-      | Some { portal; open_on_hover_listeners; _ } ->
-        List.iter open_on_hover_listeners ~f:Dom_html.removeEventListener;
-        Option.iter portal ~f:Portal.destroy
+      State.update state_ref ~f:(fun state ->
+        Option.iter state.portal ~f:Portal.destroy;
+        List.iter state.open_on_hover_listeners ~f:Dom_html.removeEventListener;
+        { state with portal = None; open_on_hover_listeners = [] })
     ;;
   end
 
