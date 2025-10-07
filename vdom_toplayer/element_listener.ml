@@ -7,7 +7,8 @@ let add_event_listener element event f =
     event
     ~passive:Js._true
     (Dom_html.handler (fun ev ->
-       Vdom.Effect.Expert.handle ev (f ev);
+       Vdom.Effect.Expert.handle ev (f ev) ~on_exn:(fun exn ->
+         Base.Exn.reraise exn "Unhandled exception raised in effect");
        Js._true))
 ;;
 
