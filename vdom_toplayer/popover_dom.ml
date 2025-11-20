@@ -59,18 +59,17 @@ let portal_root class_ =
   Vdom.Node.widget ~id ~init ()
 ;;
 
-(* [nestable_popover_attr] should be set on the <div popover=... /> DOM element of
-  Bonsai tooltips/popovers, under which other popovers might be nested.
+(* [nestable_popover_attr] should be set on the <div popover=... /> DOM element of Bonsai
+   tooltips/popovers, under which other popovers might be nested.
 
-  [nested_popover_root] must be the last child of any DOM element that has
-  [nestable_popover_attr].
+   [nested_popover_root] must be the last child of any DOM element that has
+   [nestable_popover_attr].
 
-  This is fragile (for us maintainers), but gives us performance wins. *)
+   This is fragile (for us maintainers), but gives us performance wins. *)
 let nestable_popover_attr = Vdom.Attr.create nestable_popover_const ""
 
-(* [nested_popover_root] should be included at the top-level of a given popovers
-  contents such that it can be used as the portal root for any child popover
-  elements. *)
+(* [nested_popover_root] should be included at the top-level of a given popovers contents
+   such that it can be used as the portal root for any child popover elements. *)
 let nested_popover_root = portal_root nested_popover_root_const
 
 module Show_on_mount = Vdom.Attr.Hooks.Make (struct
@@ -93,9 +92,9 @@ let show_on_mount =
   Show_on_mount.create () |> Vdom.Attr.create_hook "vdom_toplayer_show_on_mount"
 ;;
 
-(* By default, popover elements have `margin:auto`,
-   which isn't what we want with floating_positioning.
-   We also make overflow be `visible`, since scrollbars in tooltips are unfortunate. *)
+(* By default, popover elements have `margin:auto`, which isn't what we want with
+   floating_positioning. We also make overflow be `visible`, since scrollbars in tooltips
+   are unfortunate. *)
 let unset_browser_styling =
   let module Style =
     [%css
@@ -152,8 +151,8 @@ module Restore_focus_on_close = Vdom.Attr.Hooks.Make (struct
           popover_root
           (Dom.Event.make "focusout")
           (fun (e : Dom_html.focusEvent Js.t) ->
-             (* If the relatedTarget is null, then the popover element is being
-                destroyed, and so the focus was inside the popover. *)
+             (* If the relatedTarget is null, then the popover element is being destroyed,
+                and so the focus was inside the popover. *)
              let related_target = e##.relatedTarget |> Js.Opt.to_option in
              focus_was_inside_before_close := Option.is_none related_target;
              Ui_effect.Ignore)
@@ -251,8 +250,7 @@ let node ?arrow ~kind ~extra_attrs ~restore_focus_on_close ~overflow_auto_wrappe
        ; nestable_popover_attr
        ]
        @ extra_attrs)
-    (* [nested_popover_root] MUST be the last child, otherwise nested popovers
-       will break.*)
+    (* [nested_popover_root] MUST be the last child, otherwise nested popovers will break. *)
     [ Vdom.Node.div
         ~attrs:
           [ (if overflow_auto_wrapper

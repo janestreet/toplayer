@@ -150,8 +150,8 @@ module Tooltip_attr = struct
       Popover_dom.node
         ?arrow
         ~kind:(if light_dismiss then `Auto else `Manual)
-          (* Tooltips should never get focus. But if they somehow do, might as well restore
-             it on close. *)
+          (* Tooltips should never get focus. But if they somehow do, might as well
+             restore it on close. *)
         ~restore_focus_on_close:true
         ~overflow_auto_wrapper:false
         ~extra_attrs:

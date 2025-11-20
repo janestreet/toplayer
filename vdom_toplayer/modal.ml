@@ -4,8 +4,8 @@ open Virtual_dom
 let lock_body_scroll_testing_attr_name = "data-lock-body-scroll-for-testing"
 
 let lock_body_scroll_attr =
-  (* Unfortunately, locking scroll by setting [overflow: hidden] results in a small
-     layout shift, because of the scrollbar disappearing / reappearing.
+  (* Unfortunately, locking scroll by setting [overflow: hidden] results in a small layout
+     shift, because of the scrollbar disappearing / reappearing.
 
      Setting[:root]'s [scrollbar-gutter] to [stable] or [stable both-edges] fixes this if
      content is overflowing at time of modal open, but if it is not, that will create a
@@ -32,8 +32,8 @@ let lock_body_scroll_attr =
     Vdom.Attr.combine actual_attr (Vdom.Attr.create lock_body_scroll_testing_attr_name "")
 ;;
 
-(* We need this only on modals because they are not constrained
-   automatically by floating UI's size middleware. *)
+(* We need this only on modals because they are not constrained automatically by floating
+   UI's size middleware. *)
 let restrict_height_to_viewport = {%css|max-height: 100vh;|}
 let testing_modal_attr_name = "data-testing-modal"
 

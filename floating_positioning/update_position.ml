@@ -62,7 +62,8 @@ module Accessors = struct
 
      https://floating-ui.com/docs/computePosition#usage
 
-     `box-sizing: border-box` is required for anchor side length matching to work properly.
+     `box-sizing: border-box` is required for anchor side length matching to work
+     properly.
 
      This is all in a layer, so it can be overriden by [extra_attrs]
   *)
