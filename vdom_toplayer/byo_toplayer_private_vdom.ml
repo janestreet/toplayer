@@ -3,6 +3,7 @@ module Position = Byo_toplayer_private_floating.Position
 module Alignment = Byo_toplayer_private_floating.Alignment
 module Offset = Byo_toplayer_private_floating.Offset
 module Match_anchor_side = Byo_toplayer_private_floating.Match_anchor_side
+module Restore_focus_on_close = Popover_dom.Restore_focus_on_close
 
 let tooltip = Tooltip.attr
 let popover = Popover.attr

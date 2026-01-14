@@ -4,6 +4,7 @@ module Position = Byo_toplayer_private_floating.Position
 module Alignment = Byo_toplayer_private_floating.Alignment
 module Offset = Byo_toplayer_private_floating.Offset
 module Match_anchor_side = Byo_toplayer_private_floating.Match_anchor_side
+module Restore_focus_on_close = Popover_dom.Restore_focus_on_close
 
 (** Do not use this library directly! Use [Byo_toplayer] instead. *)
 
@@ -53,7 +54,7 @@ val popover
   -> ?alignment:Alignment.t
   -> ?offset:Offset.t
   -> ?match_anchor_side_length:Match_anchor_side.t
-  -> ?restore_focus_on_close:bool
+  -> ?restore_focus_on_close:Restore_focus_on_close.t
   -> ?overflow_auto_wrapper:bool
   -> ?arrow:Vdom.Node.t
   -> Vdom.Node.t
@@ -70,7 +71,7 @@ module For_byo_toplayer : sig
   (** Wraps the input in a popover. Will not open or position the popover. *)
   val popover_custom
     :  ?popover_attrs:Vdom.Attr.t list
-    -> ?restore_focus_on_close:bool
+    -> ?restore_focus_on_close:Restore_focus_on_close.t
     -> ?overflow_auto_wrapper:bool
     -> ?arrow:Vdom.Node.t
     -> popover_content:Vdom.Node.t
@@ -84,7 +85,7 @@ module For_byo_toplayer : sig
   val modal
     :  ?modal_attrs:Vdom.Attr.t list
     -> ?lock_body_scroll:bool
-    -> ?restore_focus_on_close:bool
+    -> ?restore_focus_on_close:Restore_focus_on_close.t
     -> ?overflow_auto_wrapper:bool
     -> Vdom.Node.t
     -> Vdom.Node.t

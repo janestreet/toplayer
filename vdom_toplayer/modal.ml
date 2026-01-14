@@ -46,7 +46,8 @@ let testing_modal_attr =
 let node
   ?(modal_attrs = [])
   ?(lock_body_scroll = false)
-  ?(restore_focus_on_close = true)
+  ?(restore_focus_on_close =
+    Popover_dom.Restore_focus_on_close.Yes { prevent_scroll = false })
   ?(overflow_auto_wrapper = false)
   contents
   =
