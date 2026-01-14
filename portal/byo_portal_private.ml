@@ -62,11 +62,11 @@ let destroy_for_browser portal =
      any existing elements from [contents], so that the apppropriate hooks are triggered
      by [Vdom].
 
-     We could do this before removing the portal as well, but this way we get to
-     visually remove the portal immediately before computing the patch.
+     We could do this before removing the portal as well, but this way we get to visually
+     remove the portal immediately before computing the patch.
 
-     The use of [none_deprecated] is correct here, because we want to remove the
-     element, not replace it with a new one. *)
+     The use of [none_deprecated] is correct here, because we want to remove the element,
+     not replace it with a new one. *)
   apply_patch portal (Vdom.Node.none_deprecated [@alert "-deprecated"])
   |> (ignore : t -> unit)
 ;;
@@ -80,13 +80,13 @@ let destroy =
 ;;
 
 module Global_root = struct
-  (* This class is here mostly for documentation: if you inspect element a Bonsai app,
-     it explains why there's an extra div under the document root.
-     The random string at the end is part of a UUID, and is intended to discourage
-     people from using this class for styling.
+  (* This class is here mostly for documentation: if you inspect element a Bonsai app, it
+     explains why there's an extra div under the document root. The random string at the
+     end is part of a UUID, and is intended to discourage people from using this class for
+     styling.
 
-     It's also used in tests to ensure that we can restore a toplayer root after
-     clearing the dom. *)
+     It's also used in tests to ensure that we can restore a toplayer root after clearing
+     the dom. *)
   let global_root_class = "toplayer_portal_root_aa63f6b8d3b4"
 
   let create_global_toplayer_root () =

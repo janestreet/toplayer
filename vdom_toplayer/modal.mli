@@ -4,7 +4,7 @@ open Virtual_dom
 val node
   :  ?modal_attrs:Vdom.Attr.t list
   -> ?lock_body_scroll:bool
-  -> ?restore_focus_on_close:bool
+  -> ?restore_focus_on_close:Popover_dom.Restore_focus_on_close.t
   -> ?overflow_auto_wrapper:bool
   -> Vdom.Node.t
   -> Vdom.Node.t

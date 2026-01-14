@@ -11,7 +11,7 @@ module Popover_attr = struct
           { content : Vdom_with_phys_equal.Node.t
           ; popover_attrs : Vdom_with_phys_equal.Attr.t list
           ; arrow : Vdom_with_phys_equal.Node.t option
-          ; restore_focus_on_close : bool
+          ; restore_focus_on_close : Popover_dom.Restore_focus_on_close.t
           ; overflow_auto_wrapper : bool
           ; position : Position.t
           ; alignment : Alignment.t
@@ -130,7 +130,8 @@ let attr
   ?(alignment = Alignment.Center)
   ?(offset = Offset.zero)
   ?match_anchor_side_length
-  ?(restore_focus_on_close = true)
+  ?(restore_focus_on_close =
+    Popover_dom.Restore_focus_on_close.Yes { prevent_scroll = false })
   ?(overflow_auto_wrapper = false)
   ?arrow
   content
@@ -152,7 +153,8 @@ let attr
 
 let custom
   ?(popover_attrs = [])
-  ?(restore_focus_on_close = true)
+  ?(restore_focus_on_close =
+    Popover_dom.Restore_focus_on_close.Yes { prevent_scroll = false })
   ?(overflow_auto_wrapper = false)
   ?arrow
   ~popover_content
@@ -172,7 +174,7 @@ module For_testing_popover_hook = struct
     { content : Vdom_with_phys_equal.Node.t
     ; popover_attrs : Vdom_with_phys_equal.Attr.t list
     ; arrow : Vdom_with_phys_equal.Node.t option
-    ; restore_focus_on_close : bool
+    ; restore_focus_on_close : Popover_dom.Restore_focus_on_close.t
     ; overflow_auto_wrapper : bool
     ; position : Position.t
     ; alignment : Alignment.t
@@ -193,7 +195,7 @@ module For_testing_byo_toplayer = struct
     ~alignment
     ~offset
     ~match_anchor_side_length
-    ~restore_focus_on_close
+    ~(restore_focus_on_close : Popover_dom.Restore_focus_on_close.t)
     ~overflow_auto_wrapper
     ~content
     ~popover_attrs

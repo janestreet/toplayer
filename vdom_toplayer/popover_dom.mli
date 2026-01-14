@@ -4,6 +4,13 @@ open! Core
 open Js_of_ocaml
 open Virtual_dom
 
+module Restore_focus_on_close : sig
+  type t =
+    | No
+    | Yes of { prevent_scroll : bool }
+  [@@deriving sexp_of, compare, equal]
+end
+
 (** {2 Popover DOM Bindings} *)
 val show_popover : Dom_html.element Js.t -> unit
 
@@ -36,7 +43,7 @@ val node
   :  ?arrow:Vdom.Node.t
   -> kind:[< `Auto | `Manual ]
   -> extra_attrs:Vdom.Attr.t list
-  -> restore_focus_on_close:bool
+  -> restore_focus_on_close:Restore_focus_on_close.t
   -> overflow_auto_wrapper:bool
   -> Vdom.Node.t
   -> Vdom.Node.t

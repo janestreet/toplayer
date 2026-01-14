@@ -52,9 +52,9 @@ module Anchor = struct
        | `Viewport -> Fixed
        | `Document -> Absolute)
       (fun () ->
-        (* Floating UI takes coordinates relative to the viewport.
-           If we are positioning the element relative to the document, we need to subtract
-           out the scroll position.*)
+        (* Floating UI takes coordinates relative to the viewport. If we are positioning
+           the element relative to the document, we need to subtract out the scroll
+           position. *)
         let offset_x, offset_y =
           match relative_to with
           | `Viewport -> 0., 0.

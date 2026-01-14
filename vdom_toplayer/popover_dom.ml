@@ -2,12 +2,31 @@ open! Core
 open Js_of_ocaml
 open Virtual_dom
 
-let focus_if_document_has_focus (e : Dom_html.element Js.t) =
+module Restore_focus_on_close = struct
+  type t =
+    | No
+    | Yes of { prevent_scroll : bool }
+  [@@deriving sexp_of, compare, equal]
+end
+
+let focus_if_document_has_focus ?(prevent_scroll = false) (e : Dom_html.element Js.t) =
   (* If we are in an iframe, we don't want to steal focus unless we have focus. *)
   let document : < hasFocus : bool Js.t Js.meth > Js.t =
     Js_of_ocaml.Js.Unsafe.coerce Dom_html.document
   in
-  if Js_of_ocaml.Js.to_bool document##hasFocus then e##focus
+  if Js_of_ocaml.Js.to_bool document##hasFocus
+  then
+    if prevent_scroll
+    then
+      Js.Unsafe.meth_call
+        e
+        "focus"
+        [| Js.Unsafe.inject
+             (object%js
+                val preventScroll = Js._true
+             end)
+        |]
+    else e##focus
 ;;
 
 let show_popover (e : Dom_html.element Js.t) = Js.Unsafe.meth_call e "showPopover" [||]
@@ -59,18 +78,17 @@ let portal_root class_ =
   Vdom.Node.widget ~id ~init ()
 ;;
 
-(* [nestable_popover_attr] should be set on the <div popover=... /> DOM element of
-  Bonsai tooltips/popovers, under which other popovers might be nested.
+(* [nestable_popover_attr] should be set on the <div popover=... /> DOM element of Bonsai
+   tooltips/popovers, under which other popovers might be nested.
 
-  [nested_popover_root] must be the last child of any DOM element that has
-  [nestable_popover_attr].
+   [nested_popover_root] must be the last child of any DOM element that has
+   [nestable_popover_attr].
 
-  This is fragile (for us maintainers), but gives us performance wins. *)
+   This is fragile (for us maintainers), but gives us performance wins. *)
 let nestable_popover_attr = Vdom.Attr.create nestable_popover_const ""
 
-(* [nested_popover_root] should be included at the top-level of a given popovers
-  contents such that it can be used as the portal root for any child popover
-  elements. *)
+(* [nested_popover_root] should be included at the top-level of a given popovers contents
+   such that it can be used as the portal root for any child popover elements. *)
 let nested_popover_root = portal_root nested_popover_root_const
 
 module Show_on_mount = Vdom.Attr.Hooks.Make (struct
@@ -93,9 +111,9 @@ let show_on_mount =
   Show_on_mount.create () |> Vdom.Attr.create_hook "vdom_toplayer_show_on_mount"
 ;;
 
-(* By default, popover elements have `margin:auto`,
-   which isn't what we want with floating_positioning.
-   We also make overflow be `visible`, since scrollbars in tooltips are unfortunate. *)
+(* By default, popover elements have `margin:auto`, which isn't what we want with
+   floating_positioning. We also make overflow be `visible`, since scrollbars in tooltips
+   are unfortunate. *)
 let unset_browser_styling =
   let module Style =
     [%css
@@ -121,75 +139,79 @@ let element_contains node other_node =
   Js.Unsafe.meth_call node "contains" [| Js.Unsafe.inject other_node |] |> Js.to_bool
 ;;
 
-module Restore_focus_on_close = Vdom.Attr.Hooks.Make (struct
-    module Input = struct
-      type t = unit [@@deriving sexp_of]
+module Restore_focus_on_close_hook_input = struct
+  module Input = struct
+    type t = { prevent_scroll : bool } [@@deriving sexp_of, equal]
 
-      let combine () () = ()
-    end
+    let combine a _b = a
+  end
 
-    module State = struct
-      type t =
-        { restore_focus_to : Dom_html.element Js.t option
-        ; focusin_listener : Dom_html.event_listener_id
-        ; focusout_listener : Dom_html.event_listener_id
-        ; focus_was_inside_before_close : bool ref
-        }
-    end
-
-    let init () popover_root =
-      let focus_was_inside_before_close = ref false in
-      let focusin_listener =
-        Element_listener.add_event_listener
-          popover_root
-          (Dom.Event.make "focusin")
-          (fun _ ->
-             focus_was_inside_before_close := true;
-             Ui_effect.Ignore)
-      in
-      let focusout_listener =
-        Element_listener.add_event_listener
-          popover_root
-          (Dom.Event.make "focusout")
-          (fun (e : Dom_html.focusEvent Js.t) ->
-             (* If the relatedTarget is null, then the popover element is being
-                destroyed, and so the focus was inside the popover. *)
-             let related_target = e##.relatedTarget |> Js.Opt.to_option in
-             focus_was_inside_before_close := Option.is_none related_target;
-             Ui_effect.Ignore)
-      in
-      let restore_focus_to = Dom_html.document##.activeElement |> Js.Opt.to_option in
-      { State.restore_focus_to
-      ; focusin_listener
-      ; focusout_listener
-      ; focus_was_inside_before_close
+  module State = struct
+    type t =
+      { restore_focus_to : Dom_html.element Js.t option
+      ; focusin_listener : Dom_html.event_listener_id
+      ; focusout_listener : Dom_html.event_listener_id
+      ; focus_was_inside_before_close : bool ref
       }
-    ;;
+  end
 
-    let on_mount = `Do_nothing
-    let update ~old_input:() ~new_input:() _state _element = ()
+  let init { Input.prevent_scroll = _ } popover_root =
+    let focus_was_inside_before_close = ref false in
+    let focusin_listener =
+      Element_listener.add_event_listener
+        popover_root
+        (Dom.Event.make "focusin")
+        (fun _ ->
+           focus_was_inside_before_close := true;
+           Ui_effect.Ignore)
+    in
+    let focusout_listener =
+      Element_listener.add_event_listener
+        popover_root
+        (Dom.Event.make "focusout")
+        (fun (e : Dom_html.focusEvent Js.t) ->
+           (* If the relatedTarget is null, then the popover element is being destroyed,
+              and so the focus was inside the popover. *)
+           let related_target = e##.relatedTarget |> Js.Opt.to_option in
+           focus_was_inside_before_close := Option.is_none related_target;
+           Ui_effect.Ignore)
+    in
+    let restore_focus_to = Dom_html.document##.activeElement |> Js.Opt.to_option in
+    { State.restore_focus_to
+    ; focusin_listener
+    ; focusout_listener
+    ; focus_was_inside_before_close
+    }
+  ;;
 
-    let destroy
-      ()
-      { State.focusin_listener
-      ; focusout_listener
-      ; restore_focus_to
-      ; focus_was_inside_before_close
-      }
-      _element
-      =
-      Dom_html.removeEventListener focusin_listener;
-      Dom_html.removeEventListener focusout_listener;
-      match !focus_was_inside_before_close, restore_focus_to with
-      | true, Some restore_focus_to -> focus_if_document_has_focus restore_focus_to
-      | true, None | false, _ -> ()
-    ;;
-  end)
+  let on_mount = `Do_nothing
+  let update ~old_input:_ ~new_input:_ _state _element = ()
 
-let restore_focus_on_close_attr =
+  let destroy
+    { Input.prevent_scroll }
+    { State.focusin_listener
+    ; focusout_listener
+    ; restore_focus_to
+    ; focus_was_inside_before_close
+    }
+    _element
+    =
+    Dom_html.removeEventListener focusin_listener;
+    Dom_html.removeEventListener focusout_listener;
+    match !focus_was_inside_before_close, restore_focus_to with
+    | true, Some restore_focus_to ->
+      focus_if_document_has_focus ~prevent_scroll restore_focus_to
+    | true, None | false, _ -> ()
+  ;;
+end
+
+module Restore_focus_on_close_hook =
+  Vdom.Attr.Hooks.Make (Restore_focus_on_close_hook_input)
+
+let restore_focus_on_close_attr ~prevent_scroll =
   Vdom.Attr.create_hook
     "vdom_toplayer_restore_focus_on_close"
-    (Restore_focus_on_close.create ())
+    (Restore_focus_on_close_hook.create { prevent_scroll })
 ;;
 
 let focus_popover_on_open =
@@ -247,12 +269,13 @@ let node ?arrow ~kind ~extra_attrs ~restore_focus_on_close ~overflow_auto_wrappe
   Vdom.Node.div
     ~attrs:
       ([ attrs kind
-       ; (if restore_focus_on_close then restore_focus_on_close_attr else Vdom.Attr.empty)
+       ; (match restore_focus_on_close with
+          | Restore_focus_on_close.No -> Vdom.Attr.empty
+          | Yes { prevent_scroll } -> restore_focus_on_close_attr ~prevent_scroll)
        ; nestable_popover_attr
        ]
        @ extra_attrs)
-    (* [nested_popover_root] MUST be the last child, otherwise nested popovers
-       will break.*)
+    (* [nested_popover_root] MUST be the last child, otherwise nested popovers will break. *)
     [ Vdom.Node.div
         ~attrs:
           [ (if overflow_auto_wrapper
