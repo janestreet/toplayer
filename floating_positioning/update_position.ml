@@ -72,7 +72,7 @@ module Accessors = struct
       [%css
       stylesheet
         {|
-          @layer byo_toplayer_private_floating.floating_styling {
+          @layer bonsai_web_toplayer_private_floating.floating_styling {
             .floating {
               box-sizing: border-box;
 

@@ -1,7 +1,7 @@
 open! Core
 open Virtual_dom
-open Byo_toplayer_private_floating
-module Portal = Byo_portal_private
+open Bonsai_web_toplayer_private_floating
+module Portal = Bonsai_web_portal_private
 
 module Popover_attr = struct
   module Impl = struct
@@ -54,14 +54,14 @@ module Popover_attr = struct
       ~anchor
       =
       let position_attr =
-        Byo_toplayer_private_floating.position_me
+        Bonsai_web_toplayer_private_floating.position_me
           ~prepare:Popover_dom.show_popover
           ~arrow_selector:Popover_dom.arrow_selector
           ~position
           ~alignment
           ~offset
           ?match_anchor_side_length
-          (Byo_toplayer_private_floating.Anchor.of_element anchor)
+          (Bonsai_web_toplayer_private_floating.Anchor.of_element anchor)
       in
       Popover_dom.node
         ?arrow
@@ -189,7 +189,7 @@ module For_testing_popover_hook = struct
   let hook_name = hook_name
 end
 
-module For_testing_byo_toplayer = struct
+module For_testing_bonsai_web_toplayer = struct
   let wrap_anchored_popover
     ~position
     ~alignment

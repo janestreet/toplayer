@@ -1,5 +1,5 @@
 (library
- (name byo_toplayer_private_floating)
+ (name bonsai_web_toplayer_private_floating)
  (public_name toplayer.floating_positioning)
  (preprocess
   (pps js_of_ocaml-ppx ppx_css gen_js_api.ppx ppx_jane))

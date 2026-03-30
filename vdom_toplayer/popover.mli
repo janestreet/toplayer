@@ -1,6 +1,6 @@
 open! Core
 open Virtual_dom
-open Byo_toplayer_private_floating
+open Bonsai_web_toplayer_private_floating
 
 val attr
   :  ?popover_attrs:Vdom.Attr.t list
@@ -43,7 +43,7 @@ module For_testing_popover_hook : sig
   val hook_name : string
 end
 
-module For_testing_byo_toplayer : sig
+module For_testing_bonsai_web_toplayer : sig
   val wrap_anchored_popover
     :  position:Position.t
     -> alignment:Alignment.t

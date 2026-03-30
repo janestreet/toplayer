@@ -1,7 +1,7 @@
 open! Core
 open! Js_of_ocaml
 
-(** Do not use this library directly! Use [Byo_toplayer] instead. *)
+(** Do not use this library directly! Use [Bonsai_web_toplayer] instead. *)
 
 (** {2 Config Types} *)
 

@@ -2,7 +2,7 @@ open! Core
 open Js_of_ocaml
 open Virtual_dom
 module Effect = Vdom.Effect
-module Portal = Byo_portal_private
+module Portal = Bonsai_web_portal_private
 
 let add_event_listener = Element_listener.add_event_listener
 
@@ -70,7 +70,7 @@ let show_on_mouseenter ~anchor ~delay ~open_popover =
   ]
 ;;
 
-open Byo_toplayer_private_floating
+open Bonsai_web_toplayer_private_floating
 
 module Tooltip_attr = struct
   module Impl = struct

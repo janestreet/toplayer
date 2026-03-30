@@ -9,7 +9,7 @@ val node
   -> Vdom.Node.t
   -> Vdom.Node.t
 
-module For_testing_byo_toplayer : sig
+module For_testing_bonsai_web_toplayer : sig
   val modal_attr_name : string
   val lock_body_scroll_attr_name : string
 end

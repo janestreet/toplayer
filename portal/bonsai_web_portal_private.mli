@@ -3,7 +3,7 @@ open Virtual_dom
 open Js_of_ocaml
 
 (** This library is a private, vdom-only implementation of portalling, intended for use in
-    [Byo_portal] and [Vdom_toplayer]. Do not use it directly. *)
+    [Bonsai_web_portal] and [Vdom_toplayer]. Do not use it directly. *)
 
 type t
 
