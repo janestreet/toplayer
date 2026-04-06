@@ -64,7 +64,7 @@ let find_popover_portal_root (anchor : Dom_html.element Js.t) =
   in
   match root with
   | Some node -> node
-  | None -> Byo_portal_private.global_toplayer_root ()
+  | None -> Bonsai_web_portal_private.global_toplayer_root ()
 ;;
 
 let portal_root class_ =
@@ -248,7 +248,7 @@ let attrs kind =
          | `Manual -> "manual")
     ; unset_browser_styling
     ; tabindex_attr
-    ; Byo_toplayer_private_floating.Accessors.floating_styling
+    ; Bonsai_web_toplayer_private_floating.Accessors.floating_styling
     ]
 ;;
 
@@ -258,7 +258,7 @@ let wrap_arrow node =
   Vdom.Node.div
     ~attrs:
       [ Vdom.Attr.create arrow_data ""
-      ; Byo_toplayer_private_floating.Accessors.arrow_container
+      ; Bonsai_web_toplayer_private_floating.Accessors.arrow_container
       ]
     [ node ]
 ;;

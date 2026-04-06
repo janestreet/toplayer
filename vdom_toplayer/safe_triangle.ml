@@ -1,7 +1,7 @@
 open! Core
 open! Virtual_dom
 open Js_of_ocaml
-module Portal = Byo_portal_private
+module Portal = Bonsai_web_portal_private
 
 (* Enable this to visually render the triangle for debugging. *)
 let show_triangle_for_debugging = false
@@ -66,7 +66,8 @@ module Hook = struct
               @> left (`Px svg_left)
               @> create ~field:"pointer-events" ~value:"none")
             |> Vdom.Attr.style
-          ; Vdom.Attr.on_contextmenu (const Vdom.Effect.Prevent_default)
+          ; Vdom.Attr.on_contextmenu
+              (const (Vdom.Effect.Prevent_default [@alert "-deprecated"]))
           ]
         [ Vdom.Node.create_svg
             "path"

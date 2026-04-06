@@ -1,5 +1,5 @@
 (library
- (name byo_portal_private)
+ (name bonsai_web_portal_private)
  (public_name toplayer.portal)
  (preprocess
   (pps js_of_ocaml-ppx ppx_jane))

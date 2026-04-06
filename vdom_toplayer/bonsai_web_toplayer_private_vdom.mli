@@ -1,12 +1,12 @@
 open! Core
 open Virtual_dom
-module Position = Byo_toplayer_private_floating.Position
-module Alignment = Byo_toplayer_private_floating.Alignment
-module Offset = Byo_toplayer_private_floating.Offset
-module Match_anchor_side = Byo_toplayer_private_floating.Match_anchor_side
+module Position = Bonsai_web_toplayer_private_floating.Position
+module Alignment = Bonsai_web_toplayer_private_floating.Alignment
+module Offset = Bonsai_web_toplayer_private_floating.Offset
+module Match_anchor_side = Bonsai_web_toplayer_private_floating.Match_anchor_side
 module Restore_focus_on_close = Popover_dom.Restore_focus_on_close
 
-(** Do not use this library directly! Use [Byo_toplayer] instead. *)
+(** Do not use this library directly! Use [Bonsai_web_toplayer] instead. *)
 
 (** This library contains vdom utils for creating and positioning popovers, tooltips, and
     modals.
@@ -60,7 +60,7 @@ val popover
   -> Vdom.Node.t
   -> Vdom.Attr.t
 
-module For_byo_toplayer : sig
+module For_bonsai_web_toplayer : sig
   (** The implementations of [popover_custom] and [modal] assume that their DOM is placed
       outside of the app root. If placed inside the app root, [modal] **will always** be
       inert, and [popover_custom] will be inert when any modal is open, even it is on top.
@@ -103,7 +103,7 @@ module For_byo_toplayer : sig
     -> Dom_html.element Js.t option
 end
 
-module For_byo_menu : sig
+module For_bonsai_web_menu : sig
   val safe_triangle : submenu_id:string -> Vdom.Attr.t
 end
 
@@ -115,9 +115,9 @@ module For_testing_tooltip_hook : sig
   include module type of Tooltip.For_testing_tooltip_hook
 end
 
-module For_testing_byo_toplayer : sig
-  include module type of Popover.For_testing_byo_toplayer
-  include module type of Modal.For_testing_byo_toplayer
+module For_testing_bonsai_web_toplayer : sig
+  include module type of Popover.For_testing_bonsai_web_toplayer
+  include module type of Modal.For_testing_bonsai_web_toplayer
 end
 
 module For_jsdom_tests : sig
