@@ -13,8 +13,27 @@ val destroy : t -> unit
 val element : t -> Dom_html.element Js.t
 
 (** {2 global root} *)
-val global_toplayer_root : unit -> Dom_html.element Js.t
 
+module Toplayer_root : sig
+  (** Determines whether the toplayer root is a child of the HTML element or the body
+      element.
+
+      By default, this is the HTML element, as this was more backwards-compatible when
+      toplayer was added. It is recommended to always use the HTML element as the parent,
+      as now newer systems may also assume this. However, making the toplayer a child of
+      the body element can be useful when embedding certain components that assume they
+      always have a body element as an ancestor. *)
+
+  type t =
+    | Child_of_html
+    | Child_of_body
+end
+
+(** Defaults to [Child_of_html]. Only applies to when the toplayer root is created for the
+    first time, so this must be changed early for it to take effect. *)
+val toplayer_root : Toplayer_root.t ref
+
+val global_toplayer_root : unit -> Dom_html.element Js.t
 val ensure_global_toplayer_root_mounted : unit -> unit
 
 module For_testing : sig

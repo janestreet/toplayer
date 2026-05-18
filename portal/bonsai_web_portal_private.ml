@@ -79,6 +79,12 @@ let destroy =
   | false -> destroy_for_tests
 ;;
 
+module Toplayer_root = struct
+  type t =
+    | Child_of_html
+    | Child_of_body
+end
+
 module Global_root = struct
   (* This class is here mostly for documentation: if you inspect element a Bonsai app, it
      explains why there's an extra div under the document root. The random string at the
@@ -88,13 +94,18 @@ module Global_root = struct
      It's also used in tests to ensure that we can restore a toplayer root after clearing
      the dom. *)
   let global_root_class = "toplayer_portal_root_aa63f6b8d3b4"
+  let toplayer_root = ref (Child_of_html : Toplayer_root.t)
 
   let create_global_toplayer_root () =
-    let elt = Dom_html.document##createElement (Js.string "div") in
+    let document = Dom_html.document in
+    let elt = document##createElement (Js.string "div") in
     elt##setAttribute (Js.string "class") (Js.string global_root_class);
-    let (_ : Dom.node Js.t) =
-      Dom_html.document##.documentElement##appendChild (elt :> Dom.node Js.t)
+    let toplayer_parent =
+      match !toplayer_root with
+      | Child_of_html -> document##.documentElement
+      | Child_of_body -> document##.body
     in
+    let (_ : Dom.node Js.t) = toplayer_parent##appendChild (elt :> Dom.node Js.t) in
     elt
   ;;
 
