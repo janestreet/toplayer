@@ -26,7 +26,7 @@ let apply_patch_for_test portal vdom =
 ;;
 
 let apply_patch' =
-  match Am_running_how_js.am_in_browser_like_api with
+  match Am_running_how_js.(am_in_browser_like_api am_running_how) with
   | true -> apply_patch_for_browser
   | false -> apply_patch_for_test
 ;;
@@ -51,7 +51,7 @@ let create_for_test ~parent vdom =
 ;;
 
 let create =
-  match Am_running_how_js.am_in_browser_like_api with
+  match Am_running_how_js.(am_in_browser_like_api am_running_how) with
   | true -> create_for_browser
   | false -> create_for_test
 ;;
@@ -74,7 +74,7 @@ let destroy_for_browser portal =
 let destroy_for_tests _ = ()
 
 let destroy =
-  match Am_running_how_js.am_in_browser_like_api with
+  match Am_running_how_js.(am_in_browser_like_api am_running_how) with
   | true -> destroy_for_browser
   | false -> destroy_for_tests
 ;;
@@ -125,7 +125,7 @@ module Global_root = struct
   ;;
 
   let global_toplayer_root () =
-    if Am_running_how_js.am_in_browser_like_api
+    if Am_running_how_js.(am_in_browser_like_api am_running_how)
     then global_toplayer_root ()
     else Js_of_ocaml.Js.Unsafe.obj [||]
   ;;
